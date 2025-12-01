@@ -1,4 +1,4 @@
-# � Guandan Scoreboard / 掼蛋记分板 / 掼蛋記分板
+# Guandan Scoreboard / 掼蛋记分板 / 掼蛋記分板
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/react-%5E18.0.0-blue)
@@ -51,7 +51,7 @@ A modern, mobile-first scoreboard application designed for card games like Guand
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/guandan-scoreboard.git
+    git clone https://github.com/CoolVance/guandan-scoreboard.git
     cd guandan-scoreboard
     ```
 
@@ -115,7 +115,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 1.  **克隆仓库**
     ```bash
-    git clone https://github.com/yourusername/guandan-scoreboard.git
+    git clone https://github.com/CoolVance/guandan-scoreboard.git
     cd guandan-scoreboard
     ```
 
@@ -179,7 +179,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 1.  **克隆倉庫**
     ```bash
-    git clone https://github.com/yourusername/guandan-scoreboard.git
+    git clone https://github.com/CoolVance/guandan-scoreboard.git
     cd guandan-scoreboard
     ```
 
