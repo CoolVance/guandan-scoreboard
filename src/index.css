@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@keyframes rgb-border {
+    0% {
+        box-shadow: 0 0 0 4px rgba(255, 0, 0, 0.6);
+    }
+
+    20% {
+        box-shadow: 0 0 0 4px rgba(255, 165, 0, 0.6);
+    }
+
+    40% {
+        box-shadow: 0 0 0 4px rgba(255, 255, 0, 0.6);
+    }
+
+    60% {
+        box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.6);
+    }
+
+    80% {
+        box-shadow: 0 0 0 4px rgba(0, 0, 255, 0.6);
+    }
+
+    100% {
+        box-shadow: 0 0 0 4px rgba(255, 0, 0, 0.6);
+    }
+}
