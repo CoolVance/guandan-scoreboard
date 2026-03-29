@@ -23,8 +23,12 @@ A modern, mobile-first scoreboard application designed for card games like Guand
 - **Gesture Controls**: Swipe up/down to adjust levels and rounds.
 - **Draggable Floating Menu**:
   - **Smart Positioning**: Snaps to screen edges and adjusts visibility based on screen size/orientation.
-  - **Lock Mode**: Prevent accidental touches during gameplay with a long-press unlock mechanism.
+  - **Lock Mode**: Prevent accidental touches with a smart lock mechanism. Unlocking requires a **1-second long-press**, featuring a circular **progress ring** animation around the button.
   - **Quick Actions**: Switch languages, reset levels, or restart tutorial.
+- **Physical Feel Animations**:
+  - **Bounce Feedback**: Top level and round controls trigger a "press-and-pop" scaling effect when values change, providing clear operational feedback.
+  - **Visual Polishing**: Floating buttons feature a white border for better visibility across different backgrounds.
+- **Detailed Documentation**: `FUNCTIONAL_SPEC.md` is available in the root directory, detailing all business logic and scoring rules for refactoring reference.
 - **Score History**: Detailed history log with team color coding and distinct styles for different win types.
 - **Interactive Tutorial**: Guided tour for first-time users to learn all features quickly.
 - **Internationalization**: Full support for English, Simplified Chinese, and Traditional Chinese.
