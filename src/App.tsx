@@ -47,6 +47,42 @@ const SOLO_CANDIDATES = [
   { val: 60, label: '60 (王⚡)', defaultRemark: '王⚡' },
 ];
 
+// --- 辅助界面组件 ---
+
+const SwipeControl = ({ children, onSwipeUp, onSwipeDown, className, colorClass, valueKey }: any) => {
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diff = touchStartY.current - touchEndY;
+
+    if (Math.abs(diff) > 30) {
+      if (diff > 0) onSwipeUp();
+      else onSwipeDown();
+    }
+    touchStartY.current = null;
+  };
+
+  return (
+    <div
+      key={valueKey}
+      className={`${className} ${colorClass} animate-bounce-pop relative flex flex-col items-center justify-center select-none active:brightness-90 transition-all shadow-md rounded-xl overflow-hidden touch-none`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <div className="absolute top-0 left-0 w-full h-1/4 z-10 opacity-0" onClick={(e) => { e.stopPropagation(); onSwipeDown(); }}></div>
+      <div className="absolute bottom-0 left-0 w-full h-1/4 z-10 opacity-0" onClick={(e) => { e.stopPropagation(); onSwipeUp(); }}></div>
+      {children}
+    </div>
+  );
+};
+
 // --- 主组件 ---
 
 export default function App() {
@@ -351,41 +387,6 @@ export default function App() {
     localStorage.setItem('scoreboard_tutorial_seen', 'true');
   };
 
-  // --- 界面组件 ---
-
-  const SwipeControl = ({ children, onSwipeUp, onSwipeDown, className, colorClass }: any) => {
-    const touchStartY = useRef<number | null>(null);
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    const handleTouchEnd = (e: React.TouchEvent) => {
-      if (touchStartY.current === null) return;
-      const touchEndY = e.changedTouches[0].clientY;
-      const diff = touchStartY.current - touchEndY;
-
-      if (Math.abs(diff) > 30) {
-        if (diff > 0) onSwipeUp();
-        else onSwipeDown();
-      }
-      touchStartY.current = null;
-    };
-
-    return (
-      <div
-        className={`${className} ${colorClass} relative flex flex-col items-center justify-center select-none active:brightness-90 transition-all shadow-md rounded-xl overflow-hidden touch-none`}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onContextMenu={(e) => e.preventDefault()}
-      >
-        <div className="absolute top-0 left-0 w-full h-1/4 z-10 opacity-0" onClick={(e) => { e.stopPropagation(); onSwipeDown(); }}></div>
-        <div className="absolute bottom-0 left-0 w-full h-1/4 z-10 opacity-0" onClick={(e) => { e.stopPropagation(); onSwipeUp(); }}></div>
-        {children}
-      </div>
-    );
-  };
-
   return (
     <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden font-sans text-gray-900 select-none relative">
 
@@ -395,6 +396,7 @@ export default function App() {
           className="h-full" colorClass="bg-red-500 text-white"
           onSwipeUp={() => handleCardChange('left', 1)}
           onSwipeDown={() => handleCardChange('left', -1)}
+          valueKey={`left-${leftCardIdx}`}
         >
           <div className="text-sm opacity-80 mb-2">{t('redLevel')}</div>
           <div className="text-6xl font-bold">{CARD_SEQUENCE[leftCardIdx]}</div>
@@ -406,6 +408,7 @@ export default function App() {
           className="h-full" colorClass="bg-yellow-400 text-yellow-900"
           onSwipeUp={() => setMiddleNum(p => Math.max(1, p + 1))}
           onSwipeDown={() => setMiddleNum(p => Math.max(1, p - 1))}
+          valueKey={`middle-${middleNum}`}
         >
           <div className="text-sm opacity-80 mb-2">{t('round')}</div>
           <div className="text-7xl font-mono font-bold">{middleNum}</div>
@@ -417,6 +420,7 @@ export default function App() {
           className="h-full" colorClass="bg-blue-500 text-white"
           onSwipeUp={() => handleCardChange('right', 1)}
           onSwipeDown={() => handleCardChange('right', -1)}
+          valueKey={`right-${rightCardIdx}`}
         >
           <div className="text-sm opacity-80 mb-2">{t('blueLevel')}</div>
           <div className="text-6xl font-bold">{CARD_SEQUENCE[rightCardIdx]}</div>
@@ -608,6 +612,7 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
   // const [isOpen, setIsOpen] = useState(false); // Moved to parent
   const [pos, setPos] = useState(initialPos);
   const [isDraggingState, setIsDraggingState] = useState(false);
+  const [unlockProgress, setUnlockProgress] = useState(0);
 
   // Sync pos with initialPos when it changes (e.g. loaded from storage)
   useEffect(() => {
@@ -618,6 +623,7 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
   const offset = useRef({ x: 0, y: 0 });
   const dragStartTime = useRef(0);
   const lockTimer = useRef<any>(null);
+  const progressTimer = useRef<any>(null);
   const lastUnlockTime = useRef(0);
   const startPos = useRef({ x: 0, y: 0 });
   const justUnlocked = useRef(false);
@@ -722,15 +728,30 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
   // 锁定按钮逻辑
   const handleLockPressStart = () => {
     if (isLocked) {
-      // 长按解锁
-      lockTimer.current = setTimeout(() => {
-        setIsLocked(false);
-        lastUnlockTime.current = Date.now();
-        justUnlocked.current = true;
-        setTimeout(() => { justUnlocked.current = false; }, 500);
-        // 可以加个震动反馈
-        if (navigator.vibrate) navigator.vibrate(50);
-      }, 1000);
+      // 长按解锁进度开始
+      const startTime = Date.now();
+      setUnlockProgress(0);
+      
+      progressTimer.current = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(100, (elapsed / 1000) * 100);
+        setUnlockProgress(progress);
+        
+        if (progress >= 100) {
+          clearInterval(progressTimer.current);
+          progressTimer.current = null;
+          
+          // 在进度满 100% 时触发解锁逻辑
+          setIsLocked(false);
+          setUnlockProgress(0);
+          lastUnlockTime.current = Date.now();
+          justUnlocked.current = true;
+          setTimeout(() => { justUnlocked.current = false; }, 500);
+          
+          // 可以加个震动反馈
+          if (navigator.vibrate) navigator.vibrate(50);
+        }
+      }, 16);
     }
     startPos.current = pos;
     lockPressActive.current = true;
@@ -744,6 +765,12 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
       clearTimeout(lockTimer.current);
       lockTimer.current = null;
     }
+    
+    if (progressTimer.current) {
+      clearInterval(progressTimer.current);
+      progressTimer.current = null;
+    }
+    setUnlockProgress(0);
 
     if (!isLocked) {
       // 防止解锁后立即误触锁定 (500ms 冷却)
@@ -760,6 +787,11 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
       }
     }
   };
+
+  // SVG 进度条计算
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (unlockProgress / 100) * circumference;
 
   return (
     <>
@@ -789,8 +821,8 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
         <div className="relative flex flex-col gap-2">
           {/* 锁定按钮 */}
           <button
-            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white transition-all ${isLocked ? 'bg-red-500 animate-[pulse_2s_infinite] ring-4 ring-transparent border-2 border-white/20' : 'bg-gray-400'}`}
-            style={isLocked ? {
+            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white transition-all relative border-2 border-white ${isLocked ? (unlockProgress > 0 ? 'bg-red-600' : 'bg-red-500 animate-[pulse_2s_infinite] ring-4 ring-transparent') : 'bg-gray-400'}`}
+            style={isLocked && unlockProgress === 0 ? {
               boxShadow: '0 0 10px rgba(255,0,0,0.5)',
               animation: 'rgb-border 2s linear infinite'
             } : {}}
@@ -800,12 +832,27 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
             onTouchStart={handleLockPressStart}
             onTouchEnd={handleLockPressEnd}
           >
+            {isLocked && unlockProgress > 0 && (
+              <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none overflow-visible">
+                <circle
+                  cx="50%"
+                  cy="50%"
+                  r={radius}
+                  fill="transparent"
+                  stroke="white"
+                  strokeWidth="4"
+                  strokeDasharray={circumference}
+                  style={{ strokeDashoffset, transition: 'stroke-dashoffset 16ms linear' }}
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
             {isLocked ? <Lock size={20} /> : <Unlock size={20} />}
           </button>
 
           {/* 菜单按钮 */}
           <button
-            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white transition-colors ${isOpen ? 'bg-gray-700' : 'bg-blue-600'} ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white transition-colors border-2 border-white ${isOpen ? 'bg-gray-700' : 'bg-blue-600'} ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
             onClick={() => {
               if (isLocked) return;
               // 区分点击和拖动
