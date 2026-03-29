@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   ChevronUp, ChevronDown, History,
-  User, Users, Edit3, Trash2, X, AlertCircle, Languages, RotateCw, Menu, Lock, Unlock
+  User, Users, Edit3, Trash2, X, AlertCircle, Languages, RotateCw, Menu, Lock, Unlock, LayoutGrid, Plus, Minus
 } from 'lucide-react';
 
 // --- 类型定义 ---
@@ -19,11 +19,12 @@ interface PlayerConfig {
 interface ScoreRecord {
   id: string;
   timestamp: number;
-  type: 'solo' | 'duo';
-  score: number;
+  type: 'solo' | 'duo' | 'manual';
+  score: number; // 对 manual 模式，此字段可设为 0，因为分数在 manualScores 里
   winnerIds: PlayerId[];
   loserIds: PlayerId[];
   remark: string;
+  manualScores?: Record<PlayerId, number>;
 }
 
 // 扑克牌序列
@@ -107,6 +108,7 @@ export default function App() {
   });
 
   const [history, setHistory] = useState<ScoreRecord[]>([]);
+  const [scoringMode, setScoringMode] = useState<'auto' | 'manual'>('auto');
 
   // 悬浮按钮位置状态 (初始化为 null，组件挂载后计算屏幕边缘)
   const [fabPos, setFabPos] = useState<{ x: number, y: number } | null>(null);
@@ -128,10 +130,15 @@ export default function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showTopControls, setShowTopControls] = useState(true);
   const lastActivity = useRef(Date.now());
 
   // 自动锁定逻辑
   useEffect(() => {
+    // 禁用右键
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    window.addEventListener('contextmenu', handleContextMenu);
+
     const checkIdle = () => {
       if (!isLocked && Date.now() - lastActivity.current > 10000) {
         setIsLocked(true);
@@ -242,14 +249,20 @@ export default function App() {
   const totalScores = useMemo(() => {
     const scores: Record<PlayerId, number> = { N: 0, S: 0, W: 0, E: 0 };
     history.forEach(record => {
-      const { score, winnerIds, loserIds } = record;
-      if (record.type === 'solo') {
-        winnerIds.forEach(id => scores[id] += score);
-        const deduct = score / 3;
-        loserIds.forEach(id => scores[id] -= deduct);
+      if (record.type === 'manual' && record.manualScores) {
+        Object.entries(record.manualScores).forEach(([pid, val]) => {
+          scores[pid as PlayerId] += val;
+        });
       } else {
-        winnerIds.forEach(id => scores[id] += score);
-        loserIds.forEach(id => scores[id] -= score);
+        const { score, winnerIds, loserIds } = record;
+        if (record.type === 'solo') {
+          winnerIds.forEach(id => scores[id] += score);
+          const deduct = score / 3;
+          loserIds.forEach(id => scores[id] -= deduct);
+        } else {
+          winnerIds.forEach(id => scores[id] += score);
+          loserIds.forEach(id => scores[id] -= score);
+        }
       }
     });
     return scores;
@@ -345,6 +358,21 @@ export default function App() {
     closeModal();
   };
 
+  const handleManualScore = (deltas: Record<PlayerId, number>, remarkInput: string) => {
+    const newRecord: ScoreRecord = {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      type: 'manual',
+      score: 0,
+      winnerIds: (Object.keys(deltas) as PlayerId[]).filter(id => deltas[id] > 0),
+      loserIds: (Object.keys(deltas) as PlayerId[]).filter(id => deltas[id] < 0),
+      remark: remarkInput || '自',
+      manualScores: deltas
+    };
+    setHistory(prev => [...prev, newRecord]);
+    closeModal();
+  };
+
   const handleDeleteHistory = (id: string) => {
     setConfirmModal({
       isOpen: true,
@@ -368,6 +396,7 @@ export default function App() {
     setActiveModal('none');
     setSelectedPlayer(null);
     setDuoPartner(null);
+    setScoringMode('auto');
   };
 
   const toggleLang = () => {
@@ -391,54 +420,56 @@ export default function App() {
     <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden font-sans text-gray-900 select-none relative">
 
       {/* 顶部区域 */}
-      <div className="flex-none h-[40%] p-3 grid grid-cols-3 gap-3 pt-4">
-        <SwipeControl
-          className="h-full" colorClass="bg-red-500 text-white"
-          onSwipeUp={() => handleCardChange('left', 1)}
-          onSwipeDown={() => handleCardChange('left', -1)}
-          valueKey={`left-${leftCardIdx}`}
-        >
-          <div className="text-sm opacity-80 mb-2">{t('redLevel')}</div>
-          <div className="text-6xl font-bold">{CARD_SEQUENCE[leftCardIdx]}</div>
-          <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
-          <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
-        </SwipeControl>
+      {showTopControls && (
+        <div className="flex-none h-[40%] p-3 grid grid-cols-3 gap-3 pt-4">
+          <SwipeControl
+            className="h-full" colorClass="bg-red-500 text-white"
+            onSwipeUp={() => handleCardChange('left', 1)}
+            onSwipeDown={() => handleCardChange('left', -1)}
+            valueKey={`left-${leftCardIdx}`}
+          >
+            <div className="text-sm opacity-80 mb-2">{t('redLevel')}</div>
+            <div className="text-6xl font-bold">{CARD_SEQUENCE[leftCardIdx]}</div>
+            <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
+            <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
+          </SwipeControl>
 
-        <SwipeControl
-          className="h-full" colorClass="bg-yellow-400 text-yellow-900"
-          onSwipeUp={() => setMiddleNum(p => Math.max(1, p + 1))}
-          onSwipeDown={() => setMiddleNum(p => Math.max(1, p - 1))}
-          valueKey={`middle-${middleNum}`}
-        >
-          <div className="text-sm opacity-80 mb-2">{t('round')}</div>
-          <div className="text-7xl font-mono font-bold">{middleNum}</div>
-          <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
-          <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
-        </SwipeControl>
+          <SwipeControl
+            className="h-full" colorClass="bg-yellow-400 text-yellow-900"
+            onSwipeUp={() => setMiddleNum(p => Math.max(1, p + 1))}
+            onSwipeDown={() => setMiddleNum(p => Math.max(1, p - 1))}
+            valueKey={`middle-${middleNum}`}
+          >
+            <div className="text-sm opacity-80 mb-2">{t('round')}</div>
+            <div className="text-7xl font-mono font-bold">{middleNum}</div>
+            <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
+            <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
+          </SwipeControl>
 
-        <SwipeControl
-          className="h-full" colorClass="bg-blue-500 text-white"
-          onSwipeUp={() => handleCardChange('right', 1)}
-          onSwipeDown={() => handleCardChange('right', -1)}
-          valueKey={`right-${rightCardIdx}`}
-        >
-          <div className="text-sm opacity-80 mb-2">{t('blueLevel')}</div>
-          <div className="text-6xl font-bold">{CARD_SEQUENCE[rightCardIdx]}</div>
-          <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
-          <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
-        </SwipeControl>
-      </div>
+          <SwipeControl
+            className="h-full" colorClass="bg-blue-500 text-white"
+            onSwipeUp={() => handleCardChange('right', 1)}
+            onSwipeDown={() => handleCardChange('right', -1)}
+            valueKey={`right-${rightCardIdx}`}
+          >
+            <div className="text-sm opacity-80 mb-2">{t('blueLevel')}</div>
+            <div className="text-6xl font-bold">{CARD_SEQUENCE[rightCardIdx]}</div>
+            <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
+            <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
+          </SwipeControl>
+        </div>
+      )}
 
       {/* 底部十字计分盘 */}
       <div className="flex-1 p-3 pb-8 relative">
         <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
 
           <div className="col-start-2 row-start-1">
-            <PlayerButton config={INITIAL_PLAYERS.N} name={playerNames.N} score={totalScores.N} onClick={() => { setSelectedPlayer('N'); setActiveModal('action'); }} />
+            <PlayerButton config={INITIAL_PLAYERS.N} name={playerNames.N} score={totalScores.N} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('N'); setActiveModal('action'); } }} />
           </div>
 
           <div className="col-start-1 row-start-2">
-            <PlayerButton config={INITIAL_PLAYERS.W} name={playerNames.W} score={totalScores.W} onClick={() => { setSelectedPlayer('W'); setActiveModal('action'); }} />
+            <PlayerButton config={INITIAL_PLAYERS.W} name={playerNames.W} score={totalScores.W} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('W'); setActiveModal('action'); } }} />
           </div>
 
           {/* 中间灰色区域 - 三段式布局 */}
@@ -474,11 +505,11 @@ export default function App() {
           </div>
 
           <div className="col-start-3 row-start-2">
-            <PlayerButton config={INITIAL_PLAYERS.E} name={playerNames.E} score={totalScores.E} onClick={() => { setSelectedPlayer('E'); setActiveModal('action'); }} />
+            <PlayerButton config={INITIAL_PLAYERS.E} name={playerNames.E} score={totalScores.E} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('E'); setActiveModal('action'); } }} />
           </div>
 
           <div className="col-start-2 row-start-3">
-            <PlayerButton config={INITIAL_PLAYERS.S} name={playerNames.S} score={totalScores.S} onClick={() => { setSelectedPlayer('S'); setActiveModal('action'); }} />
+            <PlayerButton config={INITIAL_PLAYERS.S} name={playerNames.S} score={totalScores.S} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('S'); setActiveModal('action'); } }} />
           </div>
 
         </div>
@@ -493,6 +524,8 @@ export default function App() {
           onToggleLang={toggleLang}
           onResetLevels={handleResetLevels}
           onStartTutorial={startTutorial}
+          showTopControls={showTopControls}
+          onToggleTopControls={() => setShowTopControls(prev => !prev)}
           lang={lang}
           isLocked={isLocked}
           setIsLocked={setIsLocked}
@@ -511,7 +544,7 @@ export default function App() {
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-150" onClick={() => setConfirmModal(p => ({ ...p, isOpen: false }))}>
           <div className="bg-white w-full max-w-xs rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center" onClick={e => e.stopPropagation()}>
             <AlertCircle size={48} className="text-yellow-500 mb-4" />
-            <p className="text-lg text-gray-800 mb-6 font-medium">{confirmModal.message}</p>
+            <div className="text-lg text-gray-800 mb-6 font-medium w-full">{confirmModal.message}</div>
             <div className="flex gap-3 w-full">
               <button onClick={() => setConfirmModal(p => ({ ...p, isOpen: false }))} className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold active:bg-gray-200">{t('cancel')}</button>
               <button onClick={confirmModal.onConfirm} className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold active:bg-red-600">{t('confirm')}</button>
@@ -528,27 +561,39 @@ export default function App() {
             <button className="p-4 bg-gray-100 rounded-lg flex items-center justify-center gap-2 active:bg-gray-200" onClick={() => setActiveModal('editName')}>
               <Edit3 size={20} /> {t('editName')}
             </button>
-            <button className="p-4 bg-yellow-100 text-yellow-800 rounded-lg flex items-center justify-center gap-2 active:bg-yellow-200" onClick={() => { setScoreMode('solo'); setActiveModal('score'); }}>
+            <button className="p-4 bg-yellow-100 text-yellow-800 rounded-lg flex items-center justify-center gap-2 active:bg-yellow-200" onClick={() => { setScoringMode('auto'); setScoreMode('solo'); setActiveModal('score'); }}>
               <User size={20} /> {t('soloScore')}
             </button>
-            <button className="p-4 bg-purple-100 text-purple-800 rounded-lg flex items-center justify-center gap-2 active:bg-purple-200" onClick={() => { setScoreMode('duo'); setActiveModal('score'); }}>
+            <button className="p-4 bg-purple-100 text-purple-800 rounded-lg flex items-center justify-center gap-2 active:bg-purple-200" onClick={() => { setScoringMode('auto'); setScoreMode('duo'); setActiveModal('score'); }}>
               <Users size={20} /> {t('duoScore')}
+            </button>
+            <button className="p-4 bg-orange-100 text-orange-800 rounded-lg flex items-center justify-center gap-2 active:bg-orange-200" onClick={() => { setScoringMode('manual'); setActiveModal('score'); }}>
+              <LayoutGrid size={20} /> {t('manualMode')}
             </button>
           </div>
         </Modal>
       )}
 
-      {activeModal === 'score' && selectedPlayer && (
-        <Modal onClose={closeModal} title={scoreMode === 'solo' ? t('soloTitle') : t('duoTitle')} zIndex="z-50">
-          <ScoreInputContent
-            mode={scoreMode}
-            currentPlayerId={selectedPlayer}
-            players={playerNames}
-            onConfirm={handleAddScore}
-            partner={duoPartner}
-            setPartner={setDuoPartner}
-            t={t}
-          />
+      {activeModal === 'score' && (
+        <Modal onClose={closeModal} title={scoringMode === 'manual' ? t('manualScoreTitle') : (scoreMode === 'solo' ? t('soloTitle') : t('duoTitle'))} zIndex="z-50">
+          {scoringMode === 'manual' ? (
+            <ManualScoreContent
+              players={playerNames}
+              onConfirm={handleManualScore}
+              t={t}
+              confirmModal={setConfirmModal}
+            />
+          ) : (
+            <ScoreInputContent
+              mode={scoreMode}
+              currentPlayerId={selectedPlayer}
+              players={playerNames}
+              onConfirm={handleAddScore}
+              partner={duoPartner}
+              setPartner={setDuoPartner}
+              t={t}
+            />
+          )}
         </Modal>
       )}
 
@@ -608,7 +653,7 @@ export default function App() {
 }
 
 // --- 可拖动抽屉组件 ---
-const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, isOpen, setIsOpen }: any) => {
+const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, isOpen, setIsOpen, showTopControls, onToggleTopControls }: any) => {
   // const [isOpen, setIsOpen] = useState(false); // Moved to parent
   const [pos, setPos] = useState(initialPos);
   const [isDraggingState, setIsDraggingState] = useState(false);
@@ -866,6 +911,11 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
 
           {/* 展开的菜单项 */}
           <div className={`absolute ${pos.y > window.innerHeight / 2 ? 'bottom-28 origin-bottom' : 'top-28 origin-top'} left-0 w-12 flex flex-col gap-2 transition-all duration-200 ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
+            {/* 切换顶栏显示 */}
+            <button onClick={() => { setIsOpen(false); onToggleTopControls(); }} className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${!showTopControls ? 'bg-yellow-400 text-yellow-900' : 'bg-white text-blue-600'}`}>
+              <LayoutGrid size={20} />
+            </button>
+
             {/* 语言切换 */}
             <button onClick={() => { setIsOpen(false); onToggleLang(); }} className="w-12 h-12 bg-white rounded-full shadow-md hover:bg-gray-50 flex items-center justify-center text-blue-600">
               <Languages size={20} />
@@ -914,6 +964,101 @@ const Modal = ({ onClose, title, children, zIndex = 'z-50', headerAction }: any)
   </div>
 );
 
+const ManualScoreContent = ({ players, onConfirm, t, confirmModal }: any) => {
+  const [scores, setScores] = useState<Record<PlayerId, string>>({ N: '', S: '', E: '', W: '' });
+  const [remark, setRemark] = useState('');
+
+  const sum = Object.values(scores).reduce((acc, val) => acc + (parseInt(val) || 0), 0);
+  const isValid = sum === 0 && Object.values(scores).some(v => v !== '' && parseInt(v) !== 0);
+
+  const handleSubmit = () => {
+    if (!isValid) return;
+
+    const deltas: any = {};
+    Object.entries(scores).forEach(([id, val]) => {
+      deltas[id] = parseInt(val) || 0;
+    });
+
+    confirmModal({
+      isOpen: true,
+      message: (
+        <div className="text-left w-full space-y-1">
+          <p className="font-bold mb-2">{t('confirmManualMsg')}</p>
+          {Object.entries(deltas).map(([id, val]: any) => (
+            <div key={id} className="flex justify-between border-b border-gray-100 py-1">
+              <span>{players[id]}</span>
+              <span className={`font-mono font-bold ${val > 0 ? 'text-blue-600' : val < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                {val > 0 ? `+${val}` : val}
+              </span>
+            </div>
+          ))}
+        </div>
+      ),
+      onConfirm: () => {
+        onConfirm(deltas, remark);
+        confirmModal((prev: any) => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const handleStep = (id: PlayerId, delta: number) => {
+    setScores(prev => ({
+      ...prev,
+      [id]: ((parseInt(prev[id]) || 0) + delta).toString()
+    }));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        {(['N', 'S', 'W', 'E'] as PlayerId[]).map(id => (
+          <div key={id}>
+            <label className="block text-xs text-gray-500 mb-1">{players[id]}</label>
+            <div className="flex items-center gap-1">
+              <button onClick={() => handleStep(id, -1)} className="p-2 bg-gray-100 rounded-lg active:bg-gray-200">
+                <Minus size={16} />
+              </button>
+              <input
+                type="number"
+                value={scores[id]}
+                onChange={e => setScores(prev => ({ ...prev, [id]: e.target.value }))}
+                placeholder="0"
+                className="w-full p-2 text-xl font-mono text-center border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none min-w-0"
+              />
+              <button onClick={() => handleStep(id, 1)} className="p-2 bg-gray-100 rounded-lg active:bg-gray-200">
+                <Plus size={16} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className={`p-2 rounded text-center text-sm font-bold ${sum === 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        {t('sumMustBeZero', { sum: sum.toString() })}
+      </div>
+
+      <div>
+        <label className="block text-sm text-gray-500 mb-2">{t('remarkLabel')}</label>
+        <input
+          type="text"
+          value={remark}
+          onChange={e => setRemark(e.target.value)}
+          placeholder={t('defaultRemark')}
+          className="w-full p-3 text-lg text-center border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+        />
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={!isValid}
+        className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-lg disabled:opacity-50 active:bg-blue-700"
+      >
+        {t('confirmScore')}
+      </button>
+    </div>
+  );
+};
+
 const ScoreInputContent = ({ mode, currentPlayerId, onConfirm, partner, setPartner, t }: any) => {
   const [score, setScore] = useState<string>('');
   const [remark, setRemark] = useState('');
@@ -944,20 +1089,32 @@ const ScoreInputContent = ({ mode, currentPlayerId, onConfirm, partner, setPartn
     }
   };
 
+  const handleStep = (delta: number) => {
+    setScore(prev => ((parseInt(prev) || 0) + delta).toString());
+  };
+
   return (
     <div className="space-y-4">
       {/* 移除队友选择，因为现在是自动匹配 */}
 
       <div>
         <label className="block text-sm text-gray-500 mb-2">{t('scoreValue')}</label>
-        <div className="grid grid-cols-4 gap-2 mb-2">
+        <div className="grid grid-cols-4 gap-2 mb-4">
           {candidates.map((c: any) => (
             <button key={c.val} onClick={() => handleCandidateClick(c)} className="py-2 bg-gray-100 rounded text-xs font-medium text-gray-700 active:bg-gray-200 truncate">
               {c.label || c.val}
             </button>
           ))}
         </div>
-        <input type="number" value={score} onChange={e => setScore(e.target.value)} placeholder={t('enterScore')} className="w-full p-3 text-2xl font-mono text-center border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" autoFocus />
+        <div className="flex items-center gap-3">
+          <button onClick={() => handleStep(-1)} className="p-4 bg-gray-100 rounded-xl active:bg-gray-200 flex-none">
+            <Minus size={24} />
+          </button>
+          <input type="number" value={score} onChange={e => setScore(e.target.value)} placeholder={t('enterScore')} className="flex-1 p-3 text-2xl font-mono text-center border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none min-w-0" autoFocus />
+          <button onClick={() => handleStep(1)} className="p-4 bg-gray-100 rounded-xl active:bg-gray-200 flex-none">
+            <Plus size={24} />
+          </button>
+        </div>
       </div>
 
       <div>
@@ -988,36 +1145,65 @@ const HistoryContent = ({ history, playerNames, onDelete, t }: any) => {
 
   return (
     <div className="space-y-3">
-      {reversedHistory.map((record: ScoreRecord) => (
-        <div key={record.id} className={`flex items-center justify-between p-3 rounded-lg border ${record.type === 'solo' ? 'bg-yellow-50 border-yellow-200' : 'bg-purple-50 border-purple-200'}`}>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`font-bold px-2 py-0.5 rounded text-xs ${record.type === 'solo' ? 'bg-yellow-100 text-yellow-800' : 'bg-purple-100 text-purple-800'}`}>
-                {record.type === 'solo' ? '独' : '对'}
-              </span>
-              <span className="text-xs text-gray-400">
-                {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+      {reversedHistory.map((record: ScoreRecord) => {
+        const isManual = record.type === 'manual';
+        const bgColor = record.type === 'solo' ? 'bg-yellow-50 border-yellow-200' : 
+                        record.type === 'duo' ? 'bg-purple-50 border-purple-200' : 
+                        'bg-orange-50 border-orange-200';
+        const tagColor = record.type === 'solo' ? 'bg-yellow-100 text-yellow-800' : 
+                         record.type === 'duo' ? 'bg-purple-100 text-purple-800' : 
+                         'bg-orange-100 text-orange-800';
+        const tagName = record.type === 'solo' ? '独' : 
+                        record.type === 'duo' ? '对' : '自';
+
+        return (
+          <div key={record.id} className={`flex items-center justify-between p-3 rounded-lg border ${bgColor}`}>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`font-bold px-2 py-0.5 rounded text-xs ${tagColor}`}>
+                  {tagName}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              
+              {isManual && record.manualScores ? (
+                <div className="text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+                  {Object.entries(record.manualScores).map(([id, val]: any) => (
+                    <span key={id} className="flex items-center gap-1">
+                      <span className="text-gray-500">{playerNames[id]}</span>
+                      <span className={`font-mono font-bold ${val > 0 ? 'text-blue-600' : val < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                        {val > 0 ? `+${val}` : val}
+                      </span>
+                    </span>
+                  ))}
+                  {record.remark && record.remark !== '自' && (
+                    <span className="ml-1 text-xs bg-white/50 px-1 rounded text-gray-600 border border-gray-100">{t('note')}: {record.remark}</span>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm flex flex-wrap items-center gap-1">
+                  {record.winnerIds.map((id: PlayerId) => {
+                    const isRed = INITIAL_PLAYERS[id].color === 'red';
+                    return (
+                      <span key={id} className={`px-1.5 py-0.5 rounded text-xs font-bold ${isRed ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {playerNames[id]}
+                      </span>
+                    );
+                  })}
+                  <span className="mx-1 text-gray-400">{t('won')}</span>
+                  <span className="font-mono font-bold text-blue-600">+{record.score}</span>
+                  {record.remark && <span className="ml-2 text-xs bg-white/50 px-1 rounded text-gray-600 border border-gray-200">{t('note')}: {record.remark}</span>}
+                </div>
+              )}
             </div>
-            <div className="text-sm flex flex-wrap items-center gap-1">
-              {record.winnerIds.map((id: PlayerId) => {
-                const isRed = INITIAL_PLAYERS[id].color === 'red';
-                return (
-                  <span key={id} className={`px-1.5 py-0.5 rounded text-xs font-bold ${isRed ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                    {playerNames[id]}
-                  </span>
-                );
-              })}
-              <span className="mx-1 text-gray-400">{t('won')}</span>
-              <span className="font-mono font-bold text-blue-600">+{record.score}</span>
-              {record.remark && <span className="ml-2 text-xs bg-white/50 px-1 rounded text-gray-600 border border-gray-200">{t('note')}: {record.remark}</span>}
-            </div>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(record.id); }} className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full active:bg-red-100">
+              <Trash2 size={20} />
+            </button>
           </div>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(record.id); }} className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full active:bg-red-100">
-            <Trash2 size={20} />
-          </button>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

@@ -19,10 +19,14 @@ A modern, mobile-first scoreboard application designed for card games like Guand
 ### ✨ Features
 
 - **Multi-Player Support**: Tracks scores for North, South, East, and West players.
-- **Flexible Scoring**: Supports both "Solo Win" and "Team Win" scoring modes with auto-partner assignment.
+- **Flexible Scoring**:
+  - **Auto Mode**: Supports "Solo Win" and "Team Win" with automatic score distribution.
+  - **Free Mode**: Allows manual scoring for all 4 players with real-time sum-to-zero validation.
+- **Efficient Input**: Integrated `±1` step buttons for all score inputs for quick adjustments.
 - **Gesture Controls**: Swipe up/down to adjust levels and rounds.
-- **Draggable Floating Menu**:
-  - **Smart Positioning**: Snaps to screen edges and adjusts visibility based on screen size/orientation.
+- **Customizable UI**:
+  - **Immersive Mode**: Toggle visibility of top level and round controls for a cleaner scoring view.
+  - **Smart FAB**: Integrated Lock, Toggle, and Language settings with auto-edge snapping.
   - **Lock Mode**: Prevent accidental touches with a smart lock mechanism. Unlocking requires a **1-second long-press**, featuring a circular **progress ring** animation around the button.
   - **Quick Actions**: Switch languages, reset levels, or restart tutorial.
 - **Physical Feel Animations**:
