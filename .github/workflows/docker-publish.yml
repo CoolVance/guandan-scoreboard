@@ -27,7 +27,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64 # 同时构建 amd64 和 arm64 镜像 (支持 NAS/树莓派)
+          platforms: linux/amd64 # 构建 amd64
           push: true
           tags: |
             coolvance/guandan-scoreboard:latest
