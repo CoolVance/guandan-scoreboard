@@ -12,7 +12,14 @@
 ![Vite](https://img.shields.io/badge/vite-%5E5.0.0-purple)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%5E3.0.0-sky)
 
-一个现代化的、移动端优先的记分板应用，专为掼蛋等纸牌游戏设计。拥有精美的界面、直观的手势操作和全面的比分记录功能。
+一個現代化的、移動端優先的記分板應用，專為掼蛋等紙牌遊戲設計。擁有精美的界面、直觀的手勢操作和全面的比分記錄功能。
+
+---
+
+### 🌐 在线演示 (Demo)
+
+- **GitHub Pages (推荐)**: [https://coolvance.github.io/guandan-scoreboard/](https://coolvance.github.io/guandan-scoreboard/)
+- **Vercel (极速)**: [https://guandan-scoreboard.vercel.app/](https://guandan-scoreboard.vercel.app/)
 
 ---
 
