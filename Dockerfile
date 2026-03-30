@@ -1,5 +1,5 @@
-# 构建阶段
-FROM node:20-alpine AS build-stage
+# 构建阶段 - 显式指定使用构建主机的原生平台 (BUILDPLATFORM)，避免在模拟器中运行 npm install
+FROM --platform=$BUILDPLATFORM node:20-alpine AS build-stage
 
 WORKDIR /app
 

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[ **English** ] | [ 简体中文 ](./README.md) | [ 繁體中文 ](./README_zh-TW.md)
+[ **English** ] | [ 简体中文 ](https://github.com/CoolVance/guandan-scoreboard/blob/main/README.md) | [ 繁體中文 ](https://github.com/CoolVance/guandan-scoreboard/blob/main/README_zh-TW.md)
 
 </div>
 
@@ -80,7 +80,20 @@ This project supports fast deployment via Docker, ideal for personal servers, NA
     docker run -d -p 8080:80 --name guandan-scoreboard coolvance/guandan-scoreboard:latest
     ```
 
-2.  **Using Docker Compose (Recommended)**
+2.  **Build and Run Locally (Recommended for Developers)**
+    If you've modified the code and want to build your own image locally:
+    ```bash
+    # Build image
+    docker build -t guandan-scoreboard:local .
+
+    # Run container
+    docker run -d -p 8080:80 --name guandan-scoreboard-local guandan-scoreboard:local
+
+    # Export image package (for offline deployment)
+    docker save guandan-scoreboard:local > guandan-scoreboard-v1.0.3.tar
+    ```
+
+3.  **Using Docker Compose (Recommended)**
     Download `docker-compose.yml` and run:
     ```bash
     docker-compose up -d

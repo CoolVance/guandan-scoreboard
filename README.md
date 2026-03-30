@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[ English ](./README_en.md) | [ **简体中文** ] | [ 繁體中文 ](./README_zh-TW.md)
+[ English ](https://github.com/CoolVance/guandan-scoreboard/blob/main/README_en.md) | [ **简体中文** ] | [ 繁體中文 ](https://github.com/CoolVance/guandan-scoreboard/blob/main/README_zh-TW.md)
 
 </div>
 
@@ -81,7 +81,20 @@
     docker run -d -p 8080:80 --name guandan-scoreboard coolvance/guandan-scoreboard:latest
     ```
 
-2.  **使用 Docker Compose (推荐)**
+2.  **本地构建并运行 (推荐开发者使用)**
+    如果您修改了代码并想在本地构建自己的镜像，请运行：
+    ```bash
+    # 构建镜像
+    docker build -t guandan-scoreboard:local .
+
+    # 运行容器
+    docker run -d -p 8080:80 --name guandan-scoreboard-local guandan-scoreboard:local
+
+    # 导出镜像包 (用于离线部署)
+    docker save guandan-scoreboard:local > guandan-scoreboard-v1.0.3.tar
+    ```
+
+3.  **使用 Docker Compose (推荐)**
     下载 `docker-compose.yml` 文件后运行：
     ```bash
     docker-compose up -d

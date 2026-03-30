@@ -32,3 +32,12 @@ jobs:
           tags: |
             coolvance/guandan-scoreboard:latest
             coolvance/guandan-scoreboard:${{ github.event.release.tag_name }}
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: coolvance/guandan-scoreboard
+          short-description: "掼蛋记分板 - 现代化移动端优先计分工具 / Modern mobile-first scoreboard for Guandan."
+          readme-filepath: ./README.md
