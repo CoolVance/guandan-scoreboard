@@ -20,7 +20,7 @@ interface ScoreRecord {
   id: string;
   timestamp: number;
   type: 'solo' | 'duo' | 'manual';
-  score: number; // 对 manual 模式，此字段可设为 0，因为分数在 manualScores 里
+  score: number; // 对 manual 模式，此字段可设为 0，因为分数获在 manualScores 里
   winnerIds: PlayerId[];
   loserIds: PlayerId[];
   remark: string;
@@ -122,7 +122,7 @@ export default function App() {
   // 确认框状态
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
-    message: string;
+    message: any;
     onConfirm: () => void;
   }>({ isOpen: false, message: '', onConfirm: () => { } });
 
@@ -134,6 +134,9 @@ export default function App() {
   const [showTopControls, setShowTopControls] = useState(true);
   const lastActivity = useRef(Date.now());
 
+  const [lockProgress, setLockProgress] = useState(0);
+  const AUTO_LOCK_TIME = 10000; // 10秒
+
   // 自动锁定逻辑
   useEffect(() => {
     // 禁用右键
@@ -141,14 +144,24 @@ export default function App() {
     window.addEventListener('contextmenu', handleContextMenu);
 
     const checkIdle = () => {
-      if (!isLocked && Date.now() - lastActivity.current > 10000) {
-        setIsLocked(true);
+      if (!isLocked) {
+        const elapsed = Date.now() - lastActivity.current;
+        const progress = Math.min(100, (elapsed / AUTO_LOCK_TIME) * 100);
+        setLockProgress(progress);
+        
+        if (elapsed > AUTO_LOCK_TIME) {
+          setIsLocked(true);
+          setLockProgress(0);
+        }
+      } else {
+        setLockProgress(0);
       }
     };
-    const timer = setInterval(checkIdle, 1000);
+    const timer = setInterval(checkIdle, 50); // 更高频率更新动画
 
     const updateActivity = () => {
       lastActivity.current = Date.now();
+      if (!isLocked) setLockProgress(0);
     };
 
     window.addEventListener('click', updateActivity);
@@ -416,102 +429,154 @@ export default function App() {
 
   return (
     <div className="h-screen w-full bg-white flex flex-col overflow-hidden font-sans text-gray-900 select-none relative">
+      
+      {/* 可视内容容器 (始终保持 100% 清晰) */}
+      <div className={`flex-1 flex flex-col transition-all duration-700 ease-in-out`}>
+        {/* 顶部区域 */}
+        {showTopControls && (
+          <div className="flex-none h-[40%] p-3 grid grid-cols-3 gap-3 pt-4">
+            <SwipeControl
+              className="h-full" colorClass="bg-red-500 text-white"
+              onSwipeUp={() => handleCardChange('left', 1)}
+              onSwipeDown={() => handleCardChange('left', -1)}
+              valueKey={`left-${leftCardIdx}`}
+            >
+              <div className="text-sm opacity-80 mb-2">{t('redLevel')}</div>
+              <div className="text-6xl font-bold">{CARD_SEQUENCE[leftCardIdx]}</div>
+              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
+              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
+            </SwipeControl>
 
-      {/* 顶部区域 */}
-      {showTopControls && (
-        <div className="flex-none h-[40%] p-3 grid grid-cols-3 gap-3 pt-4">
-          <SwipeControl
-            className="h-full" colorClass="bg-red-500 text-white"
-            onSwipeUp={() => handleCardChange('left', 1)}
-            onSwipeDown={() => handleCardChange('left', -1)}
-            valueKey={`left-${leftCardIdx}`}
-          >
-            <div className="text-sm opacity-80 mb-2">{t('redLevel')}</div>
-            <div className="text-6xl font-bold">{CARD_SEQUENCE[leftCardIdx]}</div>
-            <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
-            <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
-          </SwipeControl>
+            <SwipeControl
+              className="h-full" colorClass="bg-yellow-400 text-yellow-900"
+              onSwipeUp={() => setMiddleNum(p => Math.max(1, p + 1))}
+              onSwipeDown={() => setMiddleNum(p => Math.max(1, p - 1))}
+              valueKey={`middle-${middleNum}`}
+            >
+              <div className="text-sm opacity-80 mb-2">{t('round')}</div>
+              <div className="text-7xl font-mono font-bold">{middleNum}</div>
+              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
+              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
+            </SwipeControl>
 
-          <SwipeControl
-            className="h-full" colorClass="bg-yellow-400 text-yellow-900"
-            onSwipeUp={() => setMiddleNum(p => Math.max(1, p + 1))}
-            onSwipeDown={() => setMiddleNum(p => Math.max(1, p - 1))}
-            valueKey={`middle-${middleNum}`}
-          >
-            <div className="text-sm opacity-80 mb-2">{t('round')}</div>
-            <div className="text-7xl font-mono font-bold">{middleNum}</div>
-            <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
-            <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
-          </SwipeControl>
-
-          <SwipeControl
-            className="h-full" colorClass="bg-blue-500 text-white"
-            onSwipeUp={() => handleCardChange('right', 1)}
-            onSwipeDown={() => handleCardChange('right', -1)}
-            valueKey={`right-${rightCardIdx}`}
-          >
-            <div className="text-sm opacity-80 mb-2">{t('blueLevel')}</div>
-            <div className="text-6xl font-bold">{CARD_SEQUENCE[rightCardIdx]}</div>
-            <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
-            <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
-          </SwipeControl>
-        </div>
-      )}
-
-      {/* 底部十字计分盘 */}
-      <div className="flex-1 p-3 pb-8 relative">
-        <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
-
-          <div className="col-start-2 row-start-1">
-            <PlayerButton config={INITIAL_PLAYERS.N} name={playerNames.N} score={totalScores.N} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('N'); setActiveModal('action'); } }} />
+            <SwipeControl
+              className="h-full" colorClass="bg-blue-500 text-white"
+              onSwipeUp={() => handleCardChange('right', 1)}
+              onSwipeDown={() => handleCardChange('right', -1)}
+              valueKey={`right-${rightCardIdx}`}
+            >
+              <div className="text-sm opacity-80 mb-2">{t('blueLevel')}</div>
+              <div className="text-6xl font-bold">{CARD_SEQUENCE[rightCardIdx]}</div>
+              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
+              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
+            </SwipeControl>
           </div>
+        )}
 
-          <div className="col-start-1 row-start-2">
-            <PlayerButton config={INITIAL_PLAYERS.W} name={playerNames.W} score={totalScores.W} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('W'); setActiveModal('action'); } }} />
-          </div>
+        {/* 底部十字计分盘 */}
+        <div className="flex-1 p-3 pb-8 relative">
+          <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
 
-          {/* 中间灰色区域 - 三段式布局 */}
-          <div className="col-start-2 row-start-2 bg-gray-200 rounded-xl shadow-inner relative active:bg-gray-300 transition-colors overflow-hidden flex flex-col text-xs"
-            onClick={() => setActiveModal('history')}>
-
-            {/* 上部：北 */}
-            <div className="flex-1 w-full border-b border-gray-300 flex items-center justify-center relative px-1">
-              <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.N}</div>
+            <div className="col-start-2 row-start-1">
+              <PlayerButton config={INITIAL_PLAYERS.N} name={playerNames.N} score={totalScores.N} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('N'); setActiveModal('action'); } }} />
             </div>
 
-            {/* 中部：西 | 东 */}
-            <div className="flex-1 w-full flex border-b border-gray-300">
-              <div className="flex-1 h-full border-r border-gray-300 flex items-center justify-center relative px-1">
-                <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.W}</div>
-              </div>
-              <div className="flex-1 h-full flex items-center justify-center relative px-1">
-                <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.E}</div>
-              </div>
+            <div className="col-start-1 row-start-2">
+              <PlayerButton config={INITIAL_PLAYERS.W} name={playerNames.W} score={totalScores.W} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('W'); setActiveModal('action'); } }} />
             </div>
 
-            {/* 下部：南 */}
-            <div className="flex-1 w-full flex items-center justify-center relative px-1">
-              <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.S}</div>
+            {/* 中间灰色区域 - 三段式布局 */}
+            <div className="col-start-2 row-start-2 bg-gray-200 rounded-xl shadow-inner relative active:bg-gray-300 transition-colors overflow-hidden flex flex-col text-xs"
+              onClick={() => setActiveModal('history')}>
+
+              {/* 上部：北 */}
+              <div className="flex-1 w-full border-b border-gray-300 flex items-center justify-center relative px-1">
+                <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.N}</div>
+              </div>
+
+              {/* 中部：西 | 东 */}
+              <div className="flex-1 w-full flex border-b border-gray-300">
+                <div className="flex-1 h-full border-r border-gray-300 flex items-center justify-center relative px-1">
+                  <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.W}</div>
+                </div>
+                <div className="flex-1 h-full flex items-center justify-center relative px-1">
+                  <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.E}</div>
+                </div>
+              </div>
+
+              {/* 下部：南 */}
+              <div className="flex-1 w-full flex items-center justify-center relative px-1">
+                <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.S}</div>
+              </div>
+
+              {/* 如果全空，显示历史图标 */}
+              {!aggregatedRemarks.N && !aggregatedRemarks.S && !aggregatedRemarks.W && !aggregatedRemarks.E && (
+                <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
+                  <History size={24} />
+                </div>
+              )}
             </div>
 
-            {/* 如果全空，显示历史图标 */}
-            {!aggregatedRemarks.N && !aggregatedRemarks.S && !aggregatedRemarks.W && !aggregatedRemarks.E && (
-              <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-                <History size={24} />
-              </div>
-            )}
-          </div>
+            <div className="col-start-3 row-start-2">
+              <PlayerButton config={INITIAL_PLAYERS.E} name={playerNames.E} score={totalScores.E} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('E'); setActiveModal('action'); } }} />
+            </div>
 
-          <div className="col-start-3 row-start-2">
-            <PlayerButton config={INITIAL_PLAYERS.E} name={playerNames.E} score={totalScores.E} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('E'); setActiveModal('action'); } }} />
-          </div>
+            <div className="col-start-2 row-start-3">
+              <PlayerButton config={INITIAL_PLAYERS.S} name={playerNames.S} score={totalScores.S} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('S'); setActiveModal('action'); } }} />
+            </div>
 
-          <div className="col-start-2 row-start-3">
-            <PlayerButton config={INITIAL_PLAYERS.S} name={playerNames.S} score={totalScores.S} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('S'); setActiveModal('action'); } }} />
           </div>
-
         </div>
       </div>
+
+      {/* --- 能量喷发/聚拢霓虹动效层 (Energy Burst/Gather Iris) --- */}
+      <div className={`fixed inset-0 z-[65] pointer-events-none overflow-hidden`}>
+        <svg className="w-full h-full overflow-visible">
+          {[
+            { color: '#FF0000', delay: '0ms',   dash: 'none',   width: 12, offset: 0 },
+            { color: '#FF4500', delay: '30ms',  dash: '60, 30', width: 8,  offset: 5 },
+            { color: '#FFD700', delay: '60ms',  dash: 'none',   width: 10, offset: 10 },
+            { color: '#32CD32', delay: '90ms',  dash: '30, 15', width: 18, offset: 15 },
+            { color: '#00FA9A', delay: '120ms', dash: 'none',   width: 8,  offset: 20 },
+            { color: '#00CED1', delay: '150ms', dash: '15, 8',  width: 25, offset: 25 },
+            { color: '#1E90FF', delay: '180ms', dash: 'none',   width: 12, offset: 30 },
+            { color: '#0000FF', delay: '210ms', dash: '40, 20', width: 30, offset: 35 },
+            { color: '#8A2BE2', delay: '240ms', dash: 'none',   width: 15, offset: 40 },
+            { color: '#FF00FF', delay: '270ms', dash: '20, 15', width: 40, offset: 45 },
+          ].map((ring, i) => (
+            <circle 
+              key={i}
+              cx={fabPos ? fabPos.x + 24 : '100%'} 
+              cy={fabPos ? fabPos.y + 24 : '50%'} 
+              r={isLocked ? "0" : `${150 + ring.offset}vmax`} 
+              fill="none"
+              stroke={ring.color}
+              strokeWidth={ring.width}
+              strokeDasharray={ring.dash}
+              style={{ 
+                transition: `
+                  r 1000ms cubic-bezier(0.15, 1, 0.3, 1) ${ring.delay},
+                  opacity 1000ms ease ${ring.delay},
+                  transform 1200ms cubic-bezier(0.15, 1, 0.3, 1) ${ring.delay}
+                `,
+                transformOrigin: `${fabPos ? fabPos.x + 24 : 0}px ${fabPos ? fabPos.y + 24 : 0}px`,
+                transform: isLocked ? 'rotate(180deg)' : 'rotate(0deg)',
+                opacity: isLocked ? 0.9 : 0,
+                filter: `drop-shadow(0 0 ${isLocked ? 15 : 5}px currentColor)`
+              }}
+              strokeLinecap="round"
+            />
+          ))}
+        </svg>
+      </div>
+
+      {/* 交互拦截层 (完全透明) */}
+      {isLocked && (
+        <div 
+          className="fixed inset-0 z-[64] bg-transparent touch-none" 
+          onClick={(e) => e.stopPropagation()} 
+        />
+      )}
 
       {/* --- 悬浮抽屉 (Floating Action Button / Drawer) --- */}
       {fabPos && (
@@ -527,14 +592,10 @@ export default function App() {
           lang={lang}
           isLocked={isLocked}
           setIsLocked={setIsLocked}
+          lockProgress={lockProgress}
           isOpen={isDrawerOpen}
           setIsOpen={setIsDrawerOpen}
         />
-      )}
-
-      {/* 锁定遮罩层 */}
-      {isLocked && (
-        <div className="fixed inset-0 z-[65] bg-transparent" style={{ touchAction: 'none' }} onClick={(e) => { e.stopPropagation(); }} />
       )}
 
       {/* --- 全局确认弹窗 (Z-Index 100) --- */}
@@ -670,7 +731,7 @@ export default function App() {
 }
 
 // --- 可拖动抽屉组件 ---
-const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, isOpen, setIsOpen, showTopControls, onToggleTopControls }: any) => {
+const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, lockProgress, isOpen, setIsOpen, showTopControls, onToggleTopControls }: any) => {
   // const [isOpen, setIsOpen] = useState(false); // Moved to parent
   const [pos, setPos] = useState(initialPos);
   const [isDraggingState, setIsDraggingState] = useState(false);
@@ -787,35 +848,36 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
     window.addEventListener('mouseup', onMouseUp);
   };
 
-  // 锁定按钮逻辑
   const handleLockPressStart = () => {
-    if (isLocked) {
-      // 长按解锁进度开始
-      const startTime = Date.now();
-      setUnlockProgress(0);
-      
-      progressTimer.current = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(100, (elapsed / 1000) * 100);
-        setUnlockProgress(progress);
-        
-        if (progress >= 100) {
-          clearInterval(progressTimer.current);
-          progressTimer.current = null;
-          
-          // 在进度满 100% 时触发解锁逻辑
-          setIsLocked(false);
-          setUnlockProgress(0);
-          lastUnlockTime.current = Date.now();
-          justUnlocked.current = true;
-          setTimeout(() => { justUnlocked.current = false; }, 500);
-          
-          // 可以加个震动反馈
-          if (navigator.vibrate) navigator.vibrate(50);
-        }
-      }, 16);
+    if (!isLocked) {
+      // 非锁定时点击直接锁定
+      setIsLocked(true);
+      return;
     }
-    startPos.current = pos;
+
+    // 锁定时长按解锁
+    const startTime = Date.now();
+    setUnlockProgress(0);
+    
+    progressTimer.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(100, (elapsed / 800) * 100); // 800ms 解锁
+      setUnlockProgress(progress);
+      
+      if (progress >= 100) {
+        clearInterval(progressTimer.current);
+        progressTimer.current = null;
+        
+        setIsLocked(false);
+        lastUnlockTime.current = Date.now();
+        justUnlocked.current = true;
+        setTimeout(() => { justUnlocked.current = false; }, 500);
+        
+        setUnlockProgress(0);
+        if (navigator.vibrate) navigator.vibrate(50);
+      }
+    }, 16);
+
     lockPressActive.current = true;
   };
 
@@ -823,37 +885,18 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
     if (!lockPressActive.current) return;
     lockPressActive.current = false;
 
-    if (lockTimer.current) {
-      clearTimeout(lockTimer.current);
-      lockTimer.current = null;
-    }
-    
     if (progressTimer.current) {
       clearInterval(progressTimer.current);
       progressTimer.current = null;
     }
     setUnlockProgress(0);
-
-    if (!isLocked) {
-      // 防止解锁后立即误触锁定 (500ms 冷却)
-      if (Date.now() - lastUnlockTime.current < 500) return;
-
-      // 检查是否发生了移动
-      const moveDist = Math.sqrt(Math.pow(pos.x - startPos.current.x, 2) + Math.pow(pos.y - startPos.current.y, 2));
-      if (moveDist > 5) return; // 如果移动超过 5px，则认为是拖动，不触发锁定
-
-      // 如果是点击（非拖动），则锁定
-      // 使用 dragStartTime 判断点击时长
-      if (Date.now() - dragStartTime.current < 200) {
-        setIsLocked(true);
-      }
-    }
   };
 
   // SVG 进度条计算
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (unlockProgress / 100) * circumference;
+  const activeProgress = isLocked ? unlockProgress : lockProgress;
+  const strokeDashoffset = circumference - (activeProgress / 100) * circumference;
 
   return (
     <>
@@ -884,27 +927,32 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
           {/* 锁定按钮 */}
           <button
             className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white transition-all relative border-2 border-white ${isLocked ? (unlockProgress > 0 ? 'bg-red-600' : 'bg-red-500 animate-[pulse_2s_infinite] ring-4 ring-transparent') : 'bg-gray-400'}`}
-            style={isLocked && unlockProgress === 0 ? {
-              boxShadow: '0 0 10px rgba(255,0,0,0.5)',
-              animation: 'rgb-border 2s linear infinite'
-            } : {}}
+            style={{
+              ...(isLocked && unlockProgress === 0 ? {
+                boxShadow: '0 0 10px rgba(255,0,0,0.5)',
+                animation: 'rgb-border 2s linear infinite'
+              } : {}),
+              backgroundColor: !isLocked && lockProgress > 0 
+                ? `rgb(${156 + (220 - 156) * (lockProgress / 100)}, ${163 - 163 * (lockProgress / 100)}, ${175 - 175 * (lockProgress / 100)})` 
+                : undefined
+            }}
             onMouseDown={handleLockPressStart}
             onMouseUp={handleLockPressEnd}
             onMouseLeave={handleLockPressEnd}
             onTouchStart={handleLockPressStart}
             onTouchEnd={handleLockPressEnd}
           >
-            {isLocked && unlockProgress > 0 && (
+            {activeProgress > 0 && (
               <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none overflow-visible">
                 <circle
                   cx="50%"
                   cy="50%"
                   r={radius}
                   fill="transparent"
-                  stroke="white"
+                  stroke={isLocked ? "white" : "#ef4444"}
                   strokeWidth="4"
                   strokeDasharray={circumference}
-                  style={{ strokeDashoffset, transition: 'stroke-dashoffset 16ms linear' }}
+                  style={{ strokeDashoffset, transition: isLocked ? 'none' : 'stroke-dashoffset 16ms linear' }}
                   strokeLinecap="round"
                 />
               </svg>
