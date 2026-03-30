@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  ChevronUp, ChevronDown, History,
+  ChevronUp, ChevronDown, History, List,
   User, Users, Edit3, Trash2, X, AlertCircle, Languages, RotateCw, Menu, Lock, Unlock, LayoutGrid, Plus, Minus
 } from 'lucide-react';
 
@@ -108,6 +108,7 @@ export default function App() {
   });
 
   const [history, setHistory] = useState<ScoreRecord[]>([]);
+  const [historyView, setHistoryView] = useState<'list' | 'table'>('list');
   const [scoringMode, setScoringMode] = useState<'auto' | 'manual'>('auto');
 
   // 悬浮按钮位置状态 (初始化为 null，组件挂载后计算屏幕边缘)
@@ -186,6 +187,7 @@ export default function App() {
         setMiddleNum(data.middleNum ?? 1);
         setPlayerNames(data.playerNames ?? { N: '北', S: '南', W: '西', E: '东' });
         setHistory(data.history ?? []);
+        if (data.historyView) setHistoryView(data.historyView);
         if (data.lang) setLang(data.lang);
         if (data.fabPos) {
           const { x, y } = data.fabPos;
@@ -230,11 +232,12 @@ export default function App() {
       middleNum,
       playerNames,
       history,
+      historyView,
       lang,
       fabPos
     };
     localStorage.setItem('scoreboard_v5', JSON.stringify(data));
-  }, [leftCardIdx, rightCardIdx, middleNum, playerNames, history, lang, fabPos, isLoaded]);
+  }, [leftCardIdx, rightCardIdx, middleNum, playerNames, history, historyView, lang, fabPos, isLoaded]);
 
   // 自动选择队友
   useEffect(() => {
@@ -621,13 +624,31 @@ export default function App() {
           title={t('historyTitle')}
           zIndex="z-50"
           headerAction={
-            <button onClick={handleClearHistory} className="p-2 text-red-500 hover:bg-red-50 rounded-full flex gap-1 items-center text-sm font-bold">
-              <RotateCw size={16} />
-              {t('clearHistory')}
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex bg-gray-100 p-0.5 rounded-lg mr-2">
+                <button
+                  onClick={() => setHistoryView('list')}
+                  className={`p-1.5 rounded-md transition-all ${historyView === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400'}`}
+                  title={t('viewList')}
+                >
+                  <List size={18} />
+                </button>
+                <button
+                  onClick={() => setHistoryView('table')}
+                  className={`p-1.5 rounded-md transition-all ${historyView === 'table' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400'}`}
+                  title={t('viewTable')}
+                >
+                  <LayoutGrid size={18} />
+                </button>
+              </div>
+              <button onClick={handleClearHistory} className="p-2 text-red-500 hover:bg-red-50 rounded-full flex gap-1 items-center text-sm font-bold">
+                <RotateCw size={16} />
+                {t('clearHistory')}
+              </button>
+            </div>
           }
         >
-          <HistoryContent history={history} playerNames={playerNames} onDelete={handleDeleteHistory} t={t} />
+          <HistoryContent history={history} playerNames={playerNames} onDelete={handleDeleteHistory} t={t} viewMode={historyView} />
         </Modal>
       )}
 
@@ -1135,9 +1156,71 @@ const EditNameContent = ({ initialName, onConfirm, t }: any) => {
   );
 };
 
-const HistoryContent = ({ history, playerNames, onDelete, t }: any) => {
+const HistoryContent = ({ history, playerNames, onDelete, t, viewMode = 'list' }: any) => {
   const reversedHistory = [...history].reverse();
   if (reversedHistory.length === 0) return <div className="text-center text-gray-400 py-8">{t('noHistory')}</div>;
+
+  if (viewMode === 'table') {
+    return (
+      <div className="overflow-x-auto -mx-4 px-4">
+        <table className="w-full text-sm text-left">
+          <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 z-10">
+            <tr>
+              {(['N', 'S', 'W', 'E'] as PlayerId[]).map(id => (
+                <th key={id} className="px-2 py-3 font-bold text-center border-b">{playerNames[id]}</th>
+              ))}
+              <th className="px-2 py-3 font-bold border-b">{t('remark')}</th>
+              <th className="px-2 py-3 font-bold text-center border-b">{t('delete')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {reversedHistory.map((record: ScoreRecord) => {
+              const scores: Record<PlayerId, number> = { N: 0, S: 0, W: 0, E: 0 };
+              if (record.type === 'manual' && record.manualScores) {
+                Object.entries(record.manualScores).forEach(([pid, val]) => {
+                  scores[pid as PlayerId] = val;
+                });
+              } else {
+                const { score, winnerIds, loserIds } = record;
+                if (record.type === 'solo') {
+                  winnerIds.forEach(id => scores[id] = score);
+                  const deduct = score / 3;
+                  loserIds.forEach(id => scores[id] = -deduct);
+                } else {
+                  winnerIds.forEach(id => scores[id] = score);
+                  loserIds.forEach(id => scores[id] = -score);
+                }
+              }
+
+              return (
+                <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                  {(['N', 'S', 'W', 'E'] as PlayerId[]).map(id => {
+                    const val = scores[id];
+                    return (
+                      <td key={id} className={`px-1 py-3 font-mono font-bold text-center ${val > 0 ? 'text-blue-600' : val < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                        {val > 0 ? `+${Number(val.toFixed(1))}` : Number(val.toFixed(1))}
+                      </td>
+                    );
+                  })}
+                  <td className="px-2 py-3 text-xs text-gray-600 max-w-[100px] truncate" title={record.remark}>
+                    {record.remark}
+                  </td>
+                  <td className="px-2 py-3 text-center">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onDelete(record.id); }} 
+                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
