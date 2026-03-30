@@ -1418,15 +1418,18 @@ const TutorialOverlay = ({ step, t, onNext, onPrev, onClose, fabPos, onToggleLan
           </button>
         </div>
 
-        {/* 进度指示器 */}
-        <div className="flex justify-center gap-2 mt-4">
-          {tutorialSteps.map((_, idx) => (
-            <div
-              key={idx}
-              className={`h-2 rounded-full transition-all ${idx === step ? 'w-8 bg-blue-600' : 'w-2 bg-gray-300'
-                }`}
-            />
-          ))}
+        {/* 进度指示器与版本号 */}
+        <div className="flex flex-col items-center gap-2 mt-4">
+          <div className="flex justify-center gap-2">
+            {tutorialSteps.map((_, idx) => (
+              <div
+                key={idx}
+                className={`h-2 rounded-full transition-all ${idx === step ? 'w-8 bg-blue-600' : 'w-2 bg-gray-300'
+                  }`}
+              />
+            ))}
+          </div>
+          <div className="text-[10px] text-gray-400 font-mono">v1.0.5</div>
         </div>
       </div>
     </div>

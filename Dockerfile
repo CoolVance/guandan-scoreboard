@@ -5,7 +5,7 @@ WORKDIR /app
 
 # 复制依赖文件并安装，利用 Docker 缓存加速构建
 COPY package*.json ./
-RUN npm install
+RUN npm config set registry https://registry.npmmirror.com && npm install
 
 # 复制所有源代码并构建项目
 COPY . .
