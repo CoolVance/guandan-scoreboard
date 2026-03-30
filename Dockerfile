@@ -14,6 +14,11 @@ RUN npm run build
 # 运行阶段
 FROM nginx:stable-alpine AS production-stage
 
+# 添加镜像元数据
+LABEL org.opencontainers.image.source="https://github.com/CoolVance/guandan-scoreboard"
+LABEL org.opencontainers.image.description="掼蛋记分板 - 现代化移动端优先计分工具"
+LABEL org.opencontainers.image.licenses="MIT"
+
 # 将构建好的静态文件复制到 Nginx 目录
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
