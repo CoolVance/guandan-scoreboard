@@ -745,10 +745,8 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
   const isDragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
   const dragStartTime = useRef(0);
-  const lockTimer = useRef<any>(null);
   const progressTimer = useRef<any>(null);
   const lastUnlockTime = useRef(0);
-  const startPos = useRef({ x: 0, y: 0 });
   const justUnlocked = useRef(false);
   const lockPressActive = useRef(false);
 
