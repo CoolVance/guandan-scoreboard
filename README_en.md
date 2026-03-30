@@ -70,6 +70,25 @@ A modern, mobile-first scoreboard application designed for card games like Guand
     npm run build
     ```
 
+### 🐳 Docker Deployment
+
+The project supports fast deployment via Docker, ideal for NAS or personal servers.
+
+1.  **Using Docker Compose (Recommended)**
+    Run in the root directory:
+    ```bash
+    docker-compose up -d --build
+    ```
+    Access the app via `http://localhost:8080`.
+
+2.  **Using Docker Build**
+    ```bash
+    # Build image
+    docker build -t guandan-scoreboard .
+    # Run container
+    docker run -d -p 8080:80 --name guandan-scoreboard guandan-scoreboard
+    ```
+
 ### 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

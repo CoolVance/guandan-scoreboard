@@ -70,6 +70,25 @@
     npm run build
     ```
 
+### 🐳 Docker 部署
+
+本項目支持通過 Docker 進行快速部署，特別適合在群暉 NAS 或個人服務器上運行。
+
+1.  **使用 Docker Compose (推薦)**
+    在項目根目錄下運行：
+    ```bash
+    docker-compose up -d --build
+    ```
+    運行後可通過 `http://localhost:8080` 訪問。
+
+2.  **直接構建鏡像**
+    ```bash
+    # 構建鏡像
+    docker build -t guandan-scoreboard .
+    # 運行容器
+    docker run -d -p 8080:80 --name guandan-scoreboard guandan-scoreboard
+    ```
+
 ### 🤝 參與貢獻
 
 歡迎貢獻代碼！請隨時提交 Pull Request。
