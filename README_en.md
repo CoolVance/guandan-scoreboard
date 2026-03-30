@@ -72,22 +72,31 @@ A modern, mobile-first scoreboard application designed for card games like Guand
 
 ### 🐳 Docker Deployment
 
-The project supports fast deployment via Docker, ideal for NAS or personal servers.
+This project supports fast deployment via Docker, ideal for personal servers, NAS, or local networks.
 
-1.  **Using Docker Compose (Recommended)**
-    Run in the root directory:
+1.  **Fastest Deployment (Docker Hub)**
+    Launch the app with a single command without downloading any source code:
     ```bash
-    docker-compose up -d --build
+    docker run -d -p 8080:80 --name guandan-scoreboard coolvance/guandan-scoreboard:latest
     ```
-    Access the app via `http://localhost:8080`.
 
-2.  **Using Docker Build**
+2.  **Using Docker Compose (Recommended)**
+    Download `docker-compose.yml` and run:
     ```bash
-    # Build image
-    docker build -t guandan-scoreboard .
-    # Run container
-    docker run -d -p 8080:80 --name guandan-scoreboard guandan-scoreboard
+    docker-compose up -d
     ```
+    *Note: The project is configured to prioritize pulling the remote image. If you are a developer and have modified the code, use `docker-compose up -d --build` to force a local rebuild.*
+
+3.  **Offline Deployment (Using .tar Image)**
+    If in an environment without internet, load the `.tar` image provided in the Release first:
+    ```bash
+    docker load -i guandan-scoreboard-v1.0.tar
+    docker-compose up -d
+    ```
+
+4.  **NAS (e.g., Synology) Deployment**
+    -   **Method A**: Search for `coolvance/guandan-scoreboard` in the "Registry" of Container Manager (formerly Docker) and run it directly.
+    -   **Method B**: Import `docker-compose.yml` for a one-click setup. it will automatically pull the latest image from Docker Hub.
 
 ### 🤝 Contributing
 

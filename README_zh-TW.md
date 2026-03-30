@@ -72,22 +72,33 @@
 
 ### 🐳 Docker 部署
 
-本項目支持通過 Docker 進行快速部署，特別適合在群暉 NAS 或個人服務器上運行。
+本項目支持通過 Docker 進行快速部署，特別適合在個人伺服器、NAS 或局域網環境運行。
 
-1.  **使用 Docker Compose (推薦)**
-    在項目根目錄下運行：
+1.  **最快部署 (Docker Hub)**
+    如果您不想下載源碼，只需一行命令即可啟動：
     ```bash
-    docker-compose up -d --build
+    docker run -d -p 8080:80 --name guandan-scoreboard coolvance/guandan-scoreboard:latest
     ```
-    運行後可通過 `http://localhost:8080` 訪問。
 
-2.  **直接構建鏡像**
+2.  **使用 Docker Compose (推薦)**
+    下載 `docker-compose.yml` 文件後運行：
     ```bash
-    # 構建鏡像
-    docker build -t guandan-scoreboard .
-    # 運行容器
-    docker run -d -p 8080:80 --name guandan-scoreboard guandan-scoreboard
+    docker-compose up -d
     ```
+    *註：項目已配置為優先拉取遠程鏡像。如果您是開發者並修改了代碼，請使用 `docker-compose up -d --build` 強制重新構建本地鏡像。*
+
+3.  **內網離線部署 (使用 .tar 鏡像包)**
+    如果在無網路環境下，請先導入 Release 中提供的 `.tar` 鏡像文件：
+    ```bash
+    docker load -i guandan-scoreboard-v1.0.tar
+    docker-compose up -d
+    ```
+
+4.  **NAS (如群暉) 部署建議**
+    -   **方式 A**：在 Container Manager (原 Docker) 的「註冊表」中搜索 `coolvance/guandan-scoreboard` 並直接下載運行。
+    -   **方式 B**：導入 `docker-compose.yml` 後一鍵啟動，它會自動從 Docker Hub 拉取最新鏡像。
+
+
 
 ### 🤝 參與貢獻
 
