@@ -11,18 +11,35 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo.svg'],
+      includeAssets: ['logo.svg', 'apple-touch-icon.png'],
       manifest: {
         name: '掼蛋记分板',
         short_name: '掼蛋记分',
         description: '掼蛋记分板，支持离线使用',
-        theme_color: '#3b82f6',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         icons: [
           {
             src: 'logo.svg',
-            sizes: '192x192 512x512',
+            sizes: 'any',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       },

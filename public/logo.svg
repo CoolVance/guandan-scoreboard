@@ -30,7 +30,7 @@
   </defs>
 
   <!-- 背景底色 (轻微圆角卡片感) -->
-  <rect width="512" height="512" rx="96" fill="#f8fafc" />
+  <rect width="512" height="512" rx="96" fill="white" />
 
   <!-- 十十字架结构 (圆润卡通版) -->
   <g filter="url(#softShadow)">

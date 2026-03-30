@@ -412,7 +412,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden font-sans text-gray-900 select-none relative">
+    <div className="h-screen w-full bg-white flex flex-col overflow-hidden font-sans text-gray-900 select-none relative">
 
       {/* 顶部区域 */}
       {showTopControls && (
