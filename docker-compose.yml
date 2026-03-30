@@ -1,0 +1,7 @@
+services:
+  guandan-scoreboard:
+    build: .
+    ports:
+      - "8080:80"
+    container_name: guandan-scoreboard
+    restart: always

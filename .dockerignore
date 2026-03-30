@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.gitignore
+.dockerignore
+README.md
+README_zh.md
+README_zh-TW.md
+FUNCTIONAL_SPEC.md
+ABOUT.md
+LICENSE
+npm-debug.log
+error.log
+.vscode
+.gemini

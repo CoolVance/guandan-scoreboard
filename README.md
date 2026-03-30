@@ -1,8 +1,8 @@
-# Guandan Scoreboard
+# 掼蛋记分板
 
 <div align="center">
 
-[ **English** ] | [ 简体中文 ](./README_zh.md) | [ 繁體中文 ](./README_zh-TW.md)
+[ English ](./README_en.md) | [ **简体中文** ] | [ 繁體中文 ](./README_zh-TW.md)
 
 </div>
 
@@ -12,74 +12,75 @@
 ![Vite](https://img.shields.io/badge/vite-%5E5.0.0-purple)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%5E3.0.0-sky)
 
-A modern, mobile-first scoreboard application designed for card games like Guandan. Features a beautiful UI, intuitive gestures, and comprehensive score tracking.
+一个现代化的、移动端优先的记分板应用，专为掼蛋等纸牌游戏设计。拥有精美的界面、直观的手势操作和全面的比分记录功能。
 
 ---
 
-### ✨ Features
+### ✨ 功能特性
 
-- **Multi-Player Support**: Tracks scores for North, South, East, and West players.
-- **Flexible Scoring**:
-  - **Auto Mode**: Supports "Solo Win" and "Team Win" with automatic score distribution.
-  - **Free Mode**: Allows manual scoring for all 4 players with real-time sum-to-zero validation.
-- **Efficient Input**: Integrated `±1` step buttons for all score inputs for quick adjustments.
-- **Gesture Controls**: Swipe up/down to adjust levels and rounds.
-- **Customizable UI**:
-  - **Immersive Mode**: Toggle visibility of top level and round controls for a cleaner scoring view.
-  - **Smart FAB**: Integrated Lock, Toggle, and Language settings with auto-edge snapping.
-  - **Lock Mode**: Prevent accidental touches with a smart lock mechanism. Unlocking requires a **1-second long-press**, featuring a circular **progress ring** animation around the button.
-  - **Quick Actions**: Switch languages, reset levels, or restart tutorial.
-- **Physical Feel Animations**:
-  - **Bounce Feedback**: Top level and round controls trigger a "press-and-pop" scaling effect when values change, providing clear operational feedback.
-  - **Visual Polishing**: Floating buttons feature a white border for better visibility across different backgrounds.
-- **Detailed Documentation**: `FUNCTIONAL_SPEC.md` is available in the root directory, detailing all business logic and scoring rules for refactoring reference.
-- **Score History**: Detailed history log with team color coding and distinct styles for different win types.
-- **Interactive Tutorial**: Guided tour for first-time users to learn all features quickly.
-- **Internationalization**: Full support for English, Simplified Chinese, and Traditional Chinese.
-- **Responsive Design**: Optimized for mobile devices (iPhone, Android) and desktop browsers.
-- **Offline PWA Support**: Installable on home screens and fully functional without an internet connection for all scoring features.
+- **多玩家支持**：记录北、南、东、西四位玩家的得分。
+- **灵活计分**：
+  - **自动模式**：支持“独赢”和“结对赢”，自动计算得分与摊派。
+  - **自由模式**：支持四位玩家手动填分，具备总和为零的实时校验与确认机制。
+- **高效录分**：数值输入框集成 `±1` 步进按钮，微调分数更快捷。
+- **手势操作**：上下滑动即可快速调整级别和局数。
+- **个性化界面**：
+  - **沉浸模式**：支持隐藏/显示顶部级别和局数控件，获取更纯粹的计分视野。
+  - **智能悬浮球**：集成锁定、显隐、语言等核心入口，支持自动吸附。
+  - **锁定模式**：支持防误触锁定。解锁需**长按 1 秒**，伴有环绕按钮的**白色进度圈**动效，防止比赛中误操作。
+  - **快捷操作**：快速切换语言、重置级别或重看教程。
+  - **物理质感动效**：
+  - **弹跳反馈**：顶部级别和局数控件在数值改变时触发“按下并回弹”的缩放动效，提供明确的操作反馈。
+  - **视觉优化**：悬浮按钮增加白色边框，提升在各种背景下的辨识度。
+  - **详尽文档**：根目录提供 `FUNCTIONAL_SPEC.md`，详尽描述了所有业务逻辑与计分规则，为重构提供参考。
+  - **历史记录**：详细的得分历史记录，支持队伍颜色区分和不同赢法的视觉样式。
 
-### 🛠️ Tech Stack
+- **交互式教程**：为首次使用的用户提供引导式教程，快速上手所有功能。
+- **多语言支持**：完美支持简体中文、繁体中文和英语。
+- **响应式设计**：专为移动设备（iPhone, Android）优化，同时也完美适配桌面浏览器。
+- **离线 PWA 支持**：支持安装到主屏幕，在无网络环境下仍能正常使用所有核心计分功能。
 
-- **Framework**: [React 18](https://reactjs.org/)
-- **Build Tool**: [Vite](https://vitejs.dev/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [TailwindCSS](https://tailwindcss.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
+### 🛠️ 技术栈
 
-### 🚀 Getting Started
+- **框架**: [React 18](https://reactjs.org/)
+- **构建工具**: [Vite](https://vitejs.dev/)
+- **语言**: [TypeScript](https://www.typescriptlang.org/)
+- **样式**: [TailwindCSS](https://tailwindcss.com/)
+- **图标**: [Lucide React](https://lucide.dev/)
 
-1.  **Clone the repository**
+### 🚀 快速开始
+
+1.  **克隆仓库**
     ```bash
     git clone https://github.com/CoolVance/guandan-scoreboard.git
     cd guandan-scoreboard
     ```
 
-2.  **Install dependencies**
+2.  **安装依赖**
     ```bash
     npm install
     ```
 
-3.  **Run development server**
+3.  **运行开发服务器**
     ```bash
     npm run dev
     ```
 
-4.  **Build for production**
+4.  **构建生产版本**
     ```bash
     npm run build
     ```
 
-### 🤝 Contributing
+### 🤝 参与贡献
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+欢迎贡献代码！请随时提交 Pull Request。
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+1.  Fork 本项目
+2.  创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
+3.  提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
+4.  推送到分支 (`git push origin feature/AmazingFeature`)
+5.  提交 Pull Request
 
-### 📄 License
+### 📄 许可证
 
-Distributed under the MIT License. See `LICENSE` for more information.
+本项目基于 MIT 许可证分发。详情请参阅 `LICENSE` 文件。
