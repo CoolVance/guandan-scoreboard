@@ -35,7 +35,7 @@ jobs:
           push: true
           tags: |
             coolvance/guandan-scoreboard:latest
-            coolvance/guandan-scoreboard:${{ github.event.release.tag_name }}
+            ${{ github.event.release.tag_name != '' && format('coolvance/guandan-scoreboard:{0}', github.event.release.tag_name) || '' }}
 
       - name: Update Docker Hub description
         uses: peter-evans/dockerhub-description@v4
