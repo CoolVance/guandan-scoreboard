@@ -37,7 +37,7 @@ A modern, mobile-first scoreboard application designed for card games like Guand
 - **Interactive Tutorial**: Guided tour for first-time users to learn all features quickly.
 - **Internationalization**: Full support for English, Simplified Chinese, and Traditional Chinese.
 - **Responsive Design**: Optimized for mobile devices (iPhone, Android) and desktop browsers.
-- **PWA Ready**: Built with modern web technologies for a native-app-like experience.
+- **Offline PWA Support**: Installable on home screens and fully functional without an internet connection for all scoring features.
 
 ### 🛠️ Tech Stack
 

@@ -214,7 +214,8 @@ export default function App() {
 
   // 教程期间自动打开/关闭菜单
   useEffect(() => {
-    if (tutorialStep === 2 || tutorialStep === 3) {
+    // 步骤 2(layout), 3(lang), 4(reset) 需要打开菜单
+    if (tutorialStep >= 2 && tutorialStep <= 4) {
       setIsDrawerOpen(true);
     } else if (tutorialStep !== -1) {
       setIsDrawerOpen(false);
@@ -403,13 +404,7 @@ export default function App() {
     setActiveModal('lang');
   };
 
-  const startTutorial = () => {
-    setTutorialStep(0);
-  };
-
-  const nextTutorialStep = () => {
-    setTutorialStep(prev => prev + 1);
-  };
+  const startTutorial = () => setTutorialStep(0);
 
   const closeTutorial = () => {
     setTutorialStep(-1);
@@ -641,7 +636,8 @@ export default function App() {
         <TutorialOverlay
           step={tutorialStep}
           t={t}
-          onNext={nextTutorialStep}
+          onNext={() => setTutorialStep(prev => prev + 1)}
+          onPrev={() => setTutorialStep(prev => Math.max(0, prev - 1))}
           onClose={closeTutorial}
           fabPos={fabPos}
           onToggleLang={toggleLang}
@@ -1209,19 +1205,25 @@ const HistoryContent = ({ history, playerNames, onDelete, t }: any) => {
 };
 
 // --- 教程引导组件 ---
-const TutorialOverlay = ({ step, t, onNext, onClose, fabPos, onToggleLang }: any) => {
+const TutorialOverlay = ({ step, t, onNext, onPrev, onClose, fabPos, onToggleLang }: any) => {
   // 定义每一步的目标区域和说明
   const tutorialSteps = [
     {
       target: 'fab', // 悬浮按钮
       title: t('tutorialStep1Title'),
       desc: t('tutorialStep1Desc'),
-      cardPosition: 'bottom', // 卡片位置
+      cardPosition: 'bottom',
     },
     {
       target: 'lock', // 锁定按钮
       title: t('tutorialLockTitle'),
       desc: t('tutorialLockDesc'),
+      cardPosition: 'bottom',
+    },
+    {
+      target: 'layout', // 布局按钮 (新)
+      title: t('tutorialLayoutTitle'),
+      desc: t('tutorialLayoutDesc'),
       cardPosition: 'bottom',
     },
     {
@@ -1252,13 +1254,13 @@ const TutorialOverlay = ({ step, t, onNext, onClose, fabPos, onToggleLang }: any
       target: 'players', // 玩家按钮
       title: t('tutorialStep4Title'),
       desc: t('tutorialStep4Desc'),
-      cardPosition: 'top', // 这一步卡片放在顶部
+      cardPosition: 'top',
     },
     {
       target: 'history', // 中间历史区域
       title: t('tutorialStep5Title'),
       desc: t('tutorialStep5Desc'),
-      cardPosition: 'top', // 这一步卡片也放在顶部
+      cardPosition: 'top',
     },
   ];
 
@@ -1273,47 +1275,58 @@ const TutorialOverlay = ({ step, t, onNext, onClose, fabPos, onToggleLang }: any
       case 'fab':
         if (!fabPos) return {};
         return {
-          left: fabPos.x - 10,
-          top: fabPos.y - 10,
-          width: 72,
-          height: 120, // Cover both buttons
+          left: `${fabPos.x - 10}px`,
+          top: `${fabPos.y - 10}px`,
+          width: '72px',
+          height: '120px', // Cover both main buttons
           borderRadius: '36px'
         };
       case 'lock':
         if (!fabPos) return {};
         return {
-          left: fabPos.x,
-          top: fabPos.y,
-          width: 48,
-          height: 48,
+          left: `${fabPos.x}px`,
+          top: `${fabPos.y}px`,
+          width: '48px',
+          height: '48px',
+          borderRadius: '50%'
+        };
+      case 'layout':
+        if (!fabPos) return {};
+        const isUpLayout = fabPos.y > window.innerHeight / 2;
+        return {
+          left: `${fabPos.x}px`,
+          top: isUpLayout ? `${fabPos.y - 56}px` : `${fabPos.y + 112}px`,
+          width: '48px',
+          height: '48px',
           borderRadius: '50%'
         };
       case 'lang':
         if (!fabPos) return {};
-        const isUp = fabPos.y > window.innerHeight / 2;
+        const isUpLang = fabPos.y > window.innerHeight / 2;
         return {
-          left: fabPos.x,
-          top: isUp ? fabPos.y - 168 : fabPos.y + 112,
-          width: 48,
-          height: 48,
+          left: `${fabPos.x}px`,
+          top: isUpLang ? `${fabPos.y - 112}px` : `${fabPos.y + 168}px`,
+          width: '48px',
+          height: '48px',
           borderRadius: '50%'
         };
       case 'reset':
         if (!fabPos) return {};
         const isUpReset = fabPos.y > window.innerHeight / 2;
         return {
-          left: fabPos.x,
-          top: isUpReset ? fabPos.y - 112 : fabPos.y + 168,
-          width: 48,
-          height: 48,
+          left: `${fabPos.x}px`,
+          top: isUpReset ? `${fabPos.y - 168}px` : `${fabPos.y + 224}px`,
+          width: '48px',
+          height: '48px',
           borderRadius: '50%'
         };
       case 'levels':
         return {
           left: '0.75rem',
           top: '1rem',
-          right: '0.75rem',
+          width: 'calc(100% - 1.5rem)',
           height: '40%',
+          borderRadius: '0.75rem'
         };
       case 'round':
         return {
@@ -1321,13 +1334,15 @@ const TutorialOverlay = ({ step, t, onNext, onClose, fabPos, onToggleLang }: any
           top: '1rem',
           width: '33.33%',
           height: '40%',
+          borderRadius: '0.75rem'
         };
       case 'players':
         return {
           left: '33.33%',
           top: 'calc(40% + 1rem)',
           width: '33.33%',
-          bottom: '2rem',
+          height: 'calc(60% - 3rem)',
+          borderRadius: '0.75rem'
         };
       case 'history':
         return {
@@ -1335,6 +1350,7 @@ const TutorialOverlay = ({ step, t, onNext, onClose, fabPos, onToggleLang }: any
           top: 'calc(60% + 0.5rem)',
           width: 'calc(33.33% - 1rem)',
           height: 'calc(20% - 1rem)',
+          borderRadius: '0.75rem'
         };
       default:
         return {};
@@ -1359,14 +1375,14 @@ const TutorialOverlay = ({ step, t, onNext, onClose, fabPos, onToggleLang }: any
       {/* 高亮区域 (镂空效果) */}
       {currentStep && (
         <div
-          className="absolute rounded-xl border-4 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] pointer-events-none animate-pulse"
+          className="absolute border-4 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.7)] pointer-events-none transition-all duration-500 ease-in-out"
           style={highlightStyle}
         />
       )}
 
       {/* 说明卡片 */}
-      <div className={`absolute ${getCardPositionClass()} left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-white rounded-2xl shadow-2xl p-6 pointer-events-auto animate-in slide-in-from-bottom duration-300`}>
-        <div className="flex items-start gap-3 mb-4">
+      <div className={`absolute ${getCardPositionClass()} left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-white rounded-2xl shadow-2xl p-6 pointer-events-auto transition-all duration-500 ease-in-out animate-in fade-in zoom-in-95 duration-300`}>
+        <div className="flex items-start gap-3 mb-4 transition-all duration-300" key={step}>
           <AlertCircle size={32} className="text-blue-500 flex-shrink-0 mt-1" />
           <div className="flex-1">
             <div className="flex justify-between items-start">
@@ -1379,16 +1395,24 @@ const TutorialOverlay = ({ step, t, onNext, onClose, fabPos, onToggleLang }: any
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold active:bg-gray-200"
+            className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold active:bg-gray-200 text-sm"
           >
             {t('tutorialSkip')}
           </button>
+          {step > 0 && (
+            <button
+              onClick={onPrev}
+              className="flex-1 py-3 bg-blue-100 text-blue-700 rounded-xl font-bold active:bg-blue-200 text-sm"
+            >
+              {t('tutorialPrev')}
+            </button>
+          )}
           <button
             onClick={isLastStep ? onClose : onNext}
-            className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold active:bg-blue-700"
+            className="flex-[2] py-3 bg-blue-600 text-white rounded-xl font-bold active:bg-blue-700 text-sm"
           >
             {isLastStep ? t('confirm') : t('tutorialNext')}
           </button>
