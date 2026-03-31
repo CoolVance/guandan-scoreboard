@@ -458,9 +458,9 @@ export default function App() {
     <div className="h-screen w-full bg-white flex flex-col overflow-hidden font-sans text-gray-900 select-none relative">
       
       {/* 可视内容容器 (始终保持 100% 清晰) */}
-      <div className={`flex-1 flex flex-col transition-all duration-700 ease-in-out`}>
+      <div className={`flex-1 flex flex-col transition-all duration-700 ease-in-out h-full`}>
         {/* 顶部区域 */}
-        {(uiMode === 'full' || uiMode === 'top') && (
+        {showTopControls && (uiMode === 'full' || uiMode === 'top') && (
           <div className={`flex-none p-3 grid grid-cols-3 gap-3 pt-4 transition-all duration-500 ${uiMode === 'top' ? 'h-full flex-1' : 'h-[40%]'}`}>
             <SwipeControl
               className="h-full" colorClass="bg-red-500 text-white"
@@ -502,7 +502,7 @@ export default function App() {
 
         {/* 底部十字计分盘 */}
         {(uiMode === 'full' || uiMode === 'bottom') && (
-          <div className={`flex-1 p-3 pb-8 relative transition-all duration-500 ${uiMode === 'bottom' ? 'h-full' : ''}`}>
+          <div className={`p-3 pb-8 relative transition-all duration-500 ${uiMode === 'bottom' ? 'h-full flex-1' : 'flex-1'}`}>
             <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
 
               <div className="col-start-2 row-start-1">
