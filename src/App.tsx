@@ -132,6 +132,7 @@ export default function App() {
   const [history, setHistory] = useState<ScoreRecord[]>([]);
   const [historyView, setHistoryView] = useState<'list' | 'table'>('list');
   const [scoringMode, setScoringMode] = useState<'auto' | 'manual'>('auto');
+  const [uiMode, setUiMode] = useState<'full' | 'simple'>('full');
 
   // 悬浮按钮位置状态 (初始化为 null，组件挂载后计算屏幕边缘)
   const [fabPos, setFabPos] = useState<{ x: number, y: number } | null>(null);
@@ -225,6 +226,7 @@ export default function App() {
         setHistory(data.history ?? []);
         if (data.historyView) setHistoryView(data.historyView);
         if (data.lang) setLang(data.lang);
+        if (data.uiMode) setUiMode(data.uiMode);
         if (data.fabPos) {
           const { x, y } = data.fabPos;
           const screenWidth = window.innerWidth;
@@ -269,6 +271,7 @@ export default function App() {
       playerNames,
       history,
       historyView,
+      uiMode,
       lang,
       fabPos
     };
@@ -497,59 +500,61 @@ export default function App() {
         )}
 
         {/* 底部十字计分盘 */}
-        <div className="flex-1 p-3 pb-8 relative">
-          <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
+        {uiMode === 'full' && (
+          <div className="flex-1 p-3 pb-8 relative">
+            <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
 
-            <div className="col-start-2 row-start-1">
-              <PlayerButton config={INITIAL_PLAYERS.N} name={playerNames.N} score={totalScores.N} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('N'); setActiveModal('action'); } }} />
-            </div>
-
-            <div className="col-start-1 row-start-2">
-              <PlayerButton config={INITIAL_PLAYERS.W} name={playerNames.W} score={totalScores.W} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('W'); setActiveModal('action'); } }} />
-            </div>
-
-            {/* 中间灰色区域 - 三段式布局 */}
-            <div className="col-start-2 row-start-2 bg-gray-200 rounded-xl shadow-inner relative active:bg-gray-300 transition-colors overflow-hidden flex flex-col text-xs"
-              onClick={() => setActiveModal('history')}>
-
-              {/* 上部：北 */}
-              <div className="flex-1 w-full border-b border-gray-300 flex items-center justify-center relative px-1">
-                <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.N}</div>
+              <div className="col-start-2 row-start-1">
+                <PlayerButton config={INITIAL_PLAYERS.N} name={playerNames.N} score={totalScores.N} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('N'); setActiveModal('action'); } }} />
               </div>
 
-              {/* 中部：西 | 东 */}
-              <div className="flex-1 w-full flex border-b border-gray-300">
-                <div className="flex-1 h-full border-r border-gray-300 flex items-center justify-center relative px-1">
-                  <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.W}</div>
-                </div>
-                <div className="flex-1 h-full flex items-center justify-center relative px-1">
-                  <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.E}</div>
-                </div>
+              <div className="col-start-1 row-start-2">
+                <PlayerButton config={INITIAL_PLAYERS.W} name={playerNames.W} score={totalScores.W} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('W'); setActiveModal('action'); } }} />
               </div>
 
-              {/* 下部：南 */}
-              <div className="flex-1 w-full flex items-center justify-center relative px-1">
-                <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.S}</div>
+              {/* 中间灰色区域 - 三段式布局 */}
+              <div className="col-start-2 row-start-2 bg-gray-200 rounded-xl shadow-inner relative active:bg-gray-300 transition-colors overflow-hidden flex flex-col text-xs"
+                onClick={() => setActiveModal('history')}>
+
+                {/* 上部：北 */}
+                <div className="flex-1 w-full border-b border-gray-300 flex items-center justify-center relative px-1">
+                  <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.N}</div>
+                </div>
+
+                {/* 中部：西 | 东 */}
+                <div className="flex-1 w-full flex border-b border-gray-300">
+                  <div className="flex-1 h-full border-r border-gray-300 flex items-center justify-center relative px-1">
+                    <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.W}</div>
+                  </div>
+                  <div className="flex-1 h-full flex items-center justify-center relative px-1">
+                    <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.E}</div>
+                  </div>
+                </div>
+
+                {/* 下部：南 */}
+                <div className="flex-1 w-full flex items-center justify-center relative px-1">
+                  <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.S}</div>
+                </div>
+
+                {/* 如果全空，显示历史图标 */}
+                {!aggregatedRemarks.N && !aggregatedRemarks.S && !aggregatedRemarks.W && !aggregatedRemarks.E && (
+                  <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
+                    <History size={24} />
+                  </div>
+                )}
               </div>
 
-              {/* 如果全空，显示历史图标 */}
-              {!aggregatedRemarks.N && !aggregatedRemarks.S && !aggregatedRemarks.W && !aggregatedRemarks.E && (
-                <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-                  <History size={24} />
-                </div>
-              )}
-            </div>
+              <div className="col-start-3 row-start-2">
+                <PlayerButton config={INITIAL_PLAYERS.E} name={playerNames.E} score={totalScores.E} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('E'); setActiveModal('action'); } }} />
+              </div>
 
-            <div className="col-start-3 row-start-2">
-              <PlayerButton config={INITIAL_PLAYERS.E} name={playerNames.E} score={totalScores.E} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('E'); setActiveModal('action'); } }} />
-            </div>
+              <div className="col-start-2 row-start-3">
+                <PlayerButton config={INITIAL_PLAYERS.S} name={playerNames.S} score={totalScores.S} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('S'); setActiveModal('action'); } }} />
+              </div>
 
-            <div className="col-start-2 row-start-3">
-              <PlayerButton config={INITIAL_PLAYERS.S} name={playerNames.S} score={totalScores.S} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('S'); setActiveModal('action'); } }} />
             </div>
-
           </div>
-        </div>
+        )}
       </div>
 
       {/* --- 能量喷发/聚拢霓虹动效层 (Energy Burst/Gather Iris) --- */}
@@ -612,6 +617,8 @@ export default function App() {
           onStartTutorial={startTutorial}
           showTopControls={showTopControls}
           onToggleTopControls={() => setShowTopControls(prev => !prev)}
+          uiMode={uiMode}
+          onToggleUiMode={() => setUiMode(prev => prev === 'full' ? 'simple' : 'full')}
           lang={lang}
           isLocked={isLocked}
           setIsLocked={setIsLocked}
@@ -755,7 +762,7 @@ export default function App() {
 }
 
 // --- 可拖动抽屉组件 ---
-const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, lockProgress, isOpen, setIsOpen, showTopControls, onToggleTopControls, resetActivity }: any) => {
+const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, lockProgress, isOpen, setIsOpen, showTopControls, onToggleTopControls, uiMode, onToggleUiMode, resetActivity }: any) => {
   // const [isOpen, setIsOpen] = useState(false); // Moved to parent
   const [pos, setPos] = useState(initialPos);
   const [isDraggingState, setIsDraggingState] = useState(false);
@@ -1048,9 +1055,14 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
 
           {/* 展开的菜单项 */}
           <div className={`absolute ${pos.y > window.innerHeight / 2 ? 'bottom-28 origin-bottom' : 'top-28 origin-top'} left-0 w-12 flex flex-col gap-2 transition-all duration-200 ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
+            {/* 切换界面模式 (全屏/精简) */}
+            <button onClick={() => { setIsOpen(false); onToggleUiMode(); }} className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${uiMode === 'simple' ? 'bg-green-400 text-white' : 'bg-white text-blue-600'}`}>
+              <LayoutGrid size={20} />
+            </button>
+
             {/* 切换顶栏显示 */}
             <button onClick={() => { setIsOpen(false); onToggleTopControls(); }} className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${!showTopControls ? 'bg-yellow-400 text-yellow-900' : 'bg-white text-blue-600'}`}>
-              <LayoutGrid size={20} />
+              <ChevronUp size={20} className={!showTopControls ? 'rotate-180 transition-transform' : 'transition-transform'} />
             </button>
 
             {/* 语言切换 */}
