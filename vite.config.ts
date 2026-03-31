@@ -18,6 +18,9 @@ export default defineConfig({
         description: '掼蛋记分板，支持离线使用',
         theme_color: '#ffffff',
         background_color: '#ffffff',
+        display: 'standalone',
+        start_url: './',
+        scope: './',
         icons: [
           {
             src: 'logo.svg',
@@ -44,7 +47,10 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true
       }
     })
   ],
