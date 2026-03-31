@@ -48,34 +48,55 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      # --- 新增: 准备 Release 产物 ---
-      - name: Prepare Release Assets
+      # --- Docker 多平台构建支持 ---
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Prepare Docker Images
         run: |
           mkdir -p releases
           VERSION=$(node -p "require('./package.json').version")
-          REPO_NAME=$(node -p "require('./package.json').name")
+          IMAGE_NAME=$(node -p "require('./package.json').name")
           
-          # 创建不同架构标识的包 (内容均为 dist 静态文件)
-          tar -czf "releases/${REPO_NAME}-${VERSION}-linux-amd64.tar.gz" -C dist .
-          tar -czf "releases/${REPO_NAME}-${VERSION}-linux-arm64.tar.gz" -C dist .
-          tar -czf "releases/${REPO_NAME}-${VERSION}-linux-386.tar.gz" -C dist .
-          tar -czf "releases/${REPO_NAME}-${VERSION}-linux-armv7.tar.gz" -C dist .
+          # 定义要构建的平台
+          PLATFORMS=("linux/amd64" "linux/arm64" "linux/386" "linux/arm/v7")
+          
+          for PLATFORM in "${PLATFORMS[@]}"; do
+            # 格式化平台名称用于文件名 (如 linux/amd64 -> linux-amd64)
+            PLATFORM_TAG=$(echo $PLATFORM | sed 's/\//-/g')
+            FILE_NAME="${IMAGE_NAME}-${VERSION}-${PLATFORM_TAG}.tar"
+            
+            echo "Building for $PLATFORM..."
+            
+            # 构建镜像并导出为本地 tar 文件
+            # --load 将镜像加载到本地 docker 环境，但多平台构建通常不支持 --load
+            # 因此我们使用 --output 来直接输出为本地文件
+            docker buildx build \
+              --platform $PLATFORM \
+              --tag "${IMAGE_NAME}:${VERSION}" \
+              --output type=docker,dest="releases/${FILE_NAME}" \
+              .
+          done
           
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}-${{ github.run_number }}
-          name: Release v${{ env.VERSION }} (Build ${{ github.run_number }})
+          name: Release v${{ env.VERSION }} (Docker Images)
           draft: false
           prerelease: false
           files: |
-            releases/*.tar.gz
+            releases/*.tar
           body: |
-            Automatically generated release for version ${{ env.VERSION }}.
-            Includes static assets for various platforms (amd64, arm64, 386, armv7).
+            Automatically generated release with Docker images.
+            To use these images, download the .tar file and run:
+            `docker load -i guandan-scoreboard-xxx.tar`
             
             Built from commit: ${{ github.sha }}
         env:
