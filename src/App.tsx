@@ -637,7 +637,9 @@ export default function App() {
           showTopControls={showTopControls}
           onToggleTopControls={() => setShowTopControls(prev => !prev)}
           uiMode={uiMode}
-          onToggleUiMode={(target: 'top' | 'bottom') => setUiMode(prev => prev === target ? 'full' : target)}
+          onToggleUiMode={(target: 'top' | 'bottom') => {
+            setUiMode(prev => (prev === target ? 'full' : target));
+          }}
           lang={lang}
           isLocked={isLocked}
           setIsLocked={setIsLocked}
