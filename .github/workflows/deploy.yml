@@ -2,13 +2,23 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main] # 推送到 main 时触发
+    branches: ["main"]
+  workflow_dispatch:
 
 permissions:
-  contents: write # 部署到 gh-pages 分支需要权限
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,8 +36,14 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          folder: dist # 编译后的产物所在目录
-          branch: gh-pages # 目标分支
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
