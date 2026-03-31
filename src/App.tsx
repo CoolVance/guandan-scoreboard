@@ -828,9 +828,7 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
     isDragging.current = false;
     setIsDraggingState(false);
 
-    if (justUnlocked.current) return;
-
-    // 吸附逻辑
+    // 吸附逻辑 (移除对 justUnlocked.current 的拦截，确保始终吸附)
     const screenWidth = window.innerWidth;
     const isLeft = pos.x + 24 < screenWidth / 2;
     const newX = isLeft ? 10 : screenWidth - 58;
@@ -937,6 +935,9 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
     // 即使没解锁成功，也算是一次活动，重置闲置计时
     if (resetActivity) resetActivity();
 
+    // 无论如何都重置进度状态，防止 UI 卡死
+    setUnlockProgress(0);
+
     if (!lockPressActive.current) return;
     lockPressActive.current = false;
 
@@ -944,7 +945,6 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
       clearInterval(progressTimer.current);
       progressTimer.current = null;
     }
-    setUnlockProgress(0);
   };
 
   // SVG 进度条计算
