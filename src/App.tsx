@@ -72,6 +72,24 @@ const safeVibrate = (pattern: number | number[]) => {
 
 // --- 辅助界面组件 ---
 
+const TopModeIcon = () => (
+  <div className="flex gap-1 h-5 items-center justify-center">
+    <div className="w-1.5 h-full bg-red-500 rounded-full shadow-sm" />
+    <div className="w-1.5 h-full bg-yellow-400 rounded-full shadow-sm" />
+    <div className="w-1.5 h-full bg-blue-500 rounded-full shadow-sm" />
+  </div>
+);
+
+const BottomModeIcon = () => (
+  <div className="grid grid-cols-3 grid-rows-3 gap-0.5 w-5 h-5 items-center justify-center">
+    <div className="col-start-2 row-start-1 bg-red-500 rounded-[1px]" />
+    <div className="col-start-1 row-start-2 bg-blue-500 rounded-[1px]" />
+    <div className="col-start-2 row-start-2 bg-gray-300 rounded-[1px]" />
+    <div className="col-start-3 row-start-2 bg-blue-500 rounded-[1px]" />
+    <div className="col-start-2 row-start-3 bg-red-500 rounded-[1px]" />
+  </div>
+);
+
 const SwipeControl = ({ children, onSwipeUp, onSwipeDown, className, colorClass, valueKey }: any) => {
   const touchStartY = useRef<number | null>(null);
 
@@ -619,7 +637,7 @@ export default function App() {
           showTopControls={showTopControls}
           onToggleTopControls={() => setShowTopControls(prev => !prev)}
           uiMode={uiMode}
-          onToggleUiMode={() => setUiMode(prev => prev === 'full' ? 'simple' : 'full')}
+          onToggleUiMode={(target: 'top' | 'bottom') => setUiMode(prev => prev === target ? 'full' : target)}
           lang={lang}
           isLocked={isLocked}
           setIsLocked={setIsLocked}
@@ -1057,14 +1075,20 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
 
           {/* 展开的菜单项 */}
           <div className={`absolute ${pos.y > window.innerHeight / 2 ? 'bottom-28 origin-bottom' : 'top-28 origin-top'} left-0 w-12 flex flex-col gap-2 transition-all duration-200 ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
-            {/* 切换界面模式 (全屏/精简) */}
-            <button onClick={() => { setIsOpen(false); onToggleUiMode(); }} className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${uiMode === 'simple' ? 'bg-green-400 text-white' : 'bg-white text-blue-600'}`}>
-              <LayoutGrid size={20} />
+            {/* 切换仅顶部模式 (RGB 条图标) */}
+            <button 
+              onClick={() => { setIsOpen(false); onToggleUiMode('top'); }} 
+              className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${uiMode === 'top' ? 'bg-green-400 text-white' : 'bg-white text-blue-600'}`}
+            >
+              <TopModeIcon />
             </button>
 
-            {/* 切换顶栏显示 */}
-            <button onClick={() => { setIsOpen(false); onToggleTopControls(); }} className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${!showTopControls ? 'bg-yellow-400 text-yellow-900' : 'bg-white text-blue-600'}`}>
-              <ChevronUp size={20} className={!showTopControls ? 'rotate-180 transition-transform' : 'transition-transform'} />
+            {/* 切换仅底部模式 (十字图标) */}
+            <button 
+              onClick={() => { setIsOpen(false); onToggleUiMode('bottom'); }} 
+              className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${uiMode === 'bottom' ? 'bg-green-400 text-white' : 'bg-white text-blue-600'}`}
+            >
+              <BottomModeIcon />
             </button>
 
             {/* 语言切换 */}
