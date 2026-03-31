@@ -51,11 +51,22 @@ const SOLO_CANDIDATES = [
 // 安全震动辅助
 const safeVibrate = (pattern: number | number[]) => {
   try {
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    // 1. 基础环境检查
+    if (typeof navigator === 'undefined' || !navigator.vibrate) return;
+
+    // 2. iOS 物理层面不支持检查 (通过 userAgent 简单排除以减少无效调用)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) return;
+
+    // 3. 检查用户是否已激活页面 (避免 Intervention 报错)
+    // 注意：navigator.userActivation 是较新的 API，需做兼容
+    const isActivated = (navigator as any).userActivation ? (navigator as any).userActivation.isActive : true;
+
+    if (isActivated) {
       navigator.vibrate(pattern);
     }
   } catch (e) {
-    // 忽略浏览器介入错误 (通常发生在首次交互前)
+    // 忽略所有干预性错误
   }
 };
 
