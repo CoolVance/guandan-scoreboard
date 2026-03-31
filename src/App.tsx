@@ -81,12 +81,19 @@ const TopModeIcon = () => (
 );
 
 const BottomModeIcon = () => (
-  <div className="grid grid-cols-3 grid-rows-3 gap-0.5 w-5 h-5 items-center justify-center">
-    <div className="col-start-2 row-start-1 bg-red-500 rounded-[1px]" />
-    <div className="col-start-1 row-start-2 bg-blue-500 rounded-[1px]" />
-    <div className="col-start-2 row-start-2 bg-gray-300 rounded-[1px]" />
-    <div className="col-start-3 row-start-2 bg-blue-500 rounded-[1px]" />
-    <div className="col-start-2 row-start-3 bg-red-500 rounded-[1px]" />
+  <div className="relative w-5 h-5 flex items-center justify-center scale-90">
+    {/* 垂直线 (红) */}
+    <div className="absolute w-1.5 h-full flex flex-col justify-between">
+      <div className="w-full h-[30%] bg-red-500 rounded-sm shadow-sm" />
+      <div className="w-full h-[30%] bg-red-500 rounded-sm shadow-sm" />
+    </div>
+    {/* 水平线 (蓝) */}
+    <div className="absolute h-1.5 w-full flex justify-between items-center">
+      <div className="h-full w-[30%] bg-blue-500 rounded-sm shadow-sm" />
+      <div className="h-full w-[30%] bg-blue-500 rounded-sm shadow-sm" />
+    </div>
+    {/* 中心点 (灰) */}
+    <div className="z-10 w-1.5 h-1.5 bg-gray-300 rounded-full shadow-inner" />
   </div>
 );
 
