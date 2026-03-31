@@ -48,6 +48,17 @@ const SOLO_CANDIDATES = [
   { val: 60, label: '60 (王⚡)', defaultRemark: '王⚡' },
 ];
 
+// 安全震动辅助
+const safeVibrate = (pattern: number | number[]) => {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(pattern);
+    }
+  } catch (e) {
+    // 忽略浏览器介入错误 (通常发生在首次交互前)
+  }
+};
+
 // --- 辅助界面组件 ---
 
 const SwipeControl = ({ children, onSwipeUp, onSwipeDown, className, colorClass, valueKey }: any) => {
@@ -137,6 +148,11 @@ export default function App() {
   const [lockProgress, setLockProgress] = useState(0);
   const AUTO_LOCK_TIME = 10000; // 10秒
 
+  const resetActivity = () => {
+    lastActivity.current = Date.now();
+    if (!isLocked) setLockProgress(0);
+  };
+
   // 自动锁定逻辑
   useEffect(() => {
     // 禁用右键
@@ -157,24 +173,20 @@ export default function App() {
         setLockProgress(0);
       }
     };
-    const timer = setInterval(checkIdle, 50); // 更高频率更新动画
+    const timer = setInterval(checkIdle, 50);
 
-    const updateActivity = () => {
-      lastActivity.current = Date.now();
-      if (!isLocked) setLockProgress(0);
-    };
-
-    window.addEventListener('click', updateActivity);
-    window.addEventListener('touchstart', updateActivity);
-    window.addEventListener('mousemove', updateActivity);
-    window.addEventListener('keydown', updateActivity);
+    window.addEventListener('click', resetActivity);
+    window.addEventListener('touchstart', resetActivity);
+    window.addEventListener('mousemove', resetActivity);
+    window.addEventListener('keydown', resetActivity);
 
     return () => {
       clearInterval(timer);
-      window.removeEventListener('click', updateActivity);
-      window.removeEventListener('touchstart', updateActivity);
-      window.removeEventListener('mousemove', updateActivity);
-      window.removeEventListener('keydown', updateActivity);
+      window.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('click', resetActivity);
+      window.removeEventListener('touchstart', resetActivity);
+      window.removeEventListener('mousemove', resetActivity);
+      window.removeEventListener('keydown', resetActivity);
     };
   }, [isLocked]);
 
@@ -561,8 +573,8 @@ export default function App() {
                 `,
                 transformOrigin: `${fabPos ? fabPos.x + 24 : 0}px ${fabPos ? fabPos.y + 24 : 0}px`,
                 transform: isLocked ? 'rotate(180deg)' : 'rotate(0deg)',
-                opacity: isLocked ? 0.9 : 0,
-                filter: `drop-shadow(0 0 ${isLocked ? 15 : 5}px currentColor)`
+                opacity: isLocked ? 0.4 : 0, // 降低最大透明度，从 0.9 降至 0.4
+                filter: `blur(4px) drop-shadow(0 0 ${isLocked ? 10 : 0}px currentColor)` // 添加模糊并弱化阴影
               }}
               strokeLinecap="round"
             />
@@ -595,6 +607,7 @@ export default function App() {
           lockProgress={lockProgress}
           isOpen={isDrawerOpen}
           setIsOpen={setIsDrawerOpen}
+          resetActivity={resetActivity}
         />
       )}
 
@@ -731,7 +744,7 @@ export default function App() {
 }
 
 // --- 可拖动抽屉组件 ---
-const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, lockProgress, isOpen, setIsOpen, showTopControls, onToggleTopControls }: any) => {
+const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, lockProgress, isOpen, setIsOpen, showTopControls, onToggleTopControls, resetActivity }: any) => {
   // const [isOpen, setIsOpen] = useState(false); // Moved to parent
   const [pos, setPos] = useState(initialPos);
   const [isDraggingState, setIsDraggingState] = useState(false);
@@ -846,16 +859,33 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
     window.addEventListener('mouseup', onMouseUp);
   };
 
-  const handleLockPressStart = () => {
+  const handleLockPressStart = (e?: React.MouseEvent | React.TouchEvent) => {
+    // 阻止意外的重复触发
+    if (justUnlocked.current || lockPressActive.current) {
+      return;
+    }
+    
+    if (e && 'touches' in e) {
+      e.stopPropagation();
+    }
+
+    // 重置闲置计时，防止即时锁回
+    if (resetActivity) resetActivity();
+
+    // 情况 A: 当前未锁定 -> 点击立即锁定
     if (!isLocked) {
-      // 非锁定时点击直接锁定
       setIsLocked(true);
+      safeVibrate(10);
       return;
     }
 
-    // 锁定时长按解锁
+    // 情况 B: 当前已锁定 -> 开启长按解锁定时器
     const startTime = Date.now();
     setUnlockProgress(0);
+    lockPressActive.current = true;
+    
+    // 震动反馈表示“开始充电”
+    safeVibrate(15);
     
     progressTimer.current = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -865,21 +895,30 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
       if (progress >= 100) {
         clearInterval(progressTimer.current);
         progressTimer.current = null;
+        lockPressActive.current = false;
         
         setIsLocked(false);
+        // 解锁成功再次重置计时
+        if (resetActivity) resetActivity();
+
         lastUnlockTime.current = Date.now();
         justUnlocked.current = true;
-        setTimeout(() => { justUnlocked.current = false; }, 500);
+        setTimeout(() => { justUnlocked.current = false; }, 1000);
         
         setUnlockProgress(0);
-        if (navigator.vibrate) navigator.vibrate(50);
+        safeVibrate([30, 50, 30]); // 强力震动反馈
       }
     }, 16);
-
-    lockPressActive.current = true;
   };
 
-  const handleLockPressEnd = () => {
+  const handleLockPressEnd = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e && 'touches' in e) {
+      e.stopPropagation();
+    }
+    
+    // 即使没解锁成功，也算是一次活动，重置闲置计时
+    if (resetActivity) resetActivity();
+
     if (!lockPressActive.current) return;
     lockPressActive.current = false;
 
@@ -891,7 +930,8 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
   };
 
   // SVG 进度条计算
-  const radius = 20;
+  const isUnlocking = isLocked && unlockProgress > 0;
+  const radius = isUnlocking ? 32 : 20; // 长按时外扩半径
   const circumference = 2 * Math.PI * radius;
   const activeProgress = isLocked ? unlockProgress : lockProgress;
   const strokeDashoffset = circumference - (activeProgress / 100) * circumference;
@@ -909,9 +949,10 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
         style={{
           left: pos.x,
           top: pos.y,
-          transform: isOpen ? 'none' : 'none',
+          transform: isUnlocking ? 'scale(1.3)' : 'none', // 长按时整体放大
           cursor: isLocked ? 'default' : 'grab',
-          touchAction: 'none'
+          touchAction: 'none',
+          transitionProperty: 'transform, left, top, opacity',
         }}
         onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchMove={(e) => {
@@ -924,7 +965,7 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
         <div className="relative flex flex-col gap-2">
           {/* 锁定按钮 */}
           <button
-            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white transition-all relative border-2 border-white ${isLocked ? (unlockProgress > 0 ? 'bg-red-600' : 'bg-red-500 animate-[pulse_2s_infinite] ring-4 ring-transparent') : 'bg-gray-400'}`}
+            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white transition-all relative border-2 border-white ${isLocked ? (unlockProgress > 0 ? 'bg-red-600 scale-110' : 'bg-red-500 animate-[pulse_2s_infinite] ring-4 ring-transparent') : 'bg-gray-400'}`}
             style={{
               ...(isLocked && unlockProgress === 0 ? {
                 boxShadow: '0 0 10px rgba(255,0,0,0.5)',
@@ -932,7 +973,8 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
               } : {}),
               backgroundColor: !isLocked && lockProgress > 0 
                 ? `rgb(${156 + (220 - 156) * (lockProgress / 100)}, ${163 - 163 * (lockProgress / 100)}, ${175 - 175 * (lockProgress / 100)})` 
-                : undefined
+                : undefined,
+              zIndex: isUnlocking ? 100 : 1,
             }}
             onMouseDown={handleLockPressStart}
             onMouseUp={handleLockPressEnd}
@@ -941,16 +983,37 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
             onTouchEnd={handleLockPressEnd}
           >
             {activeProgress > 0 && (
-              <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none overflow-visible">
+              <svg 
+                className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none overflow-visible"
+                style={{ width: '100%', height: '100%' }}
+              >
+                {/* 进度底槽 (Track) - 增强可见性 */}
+                {isUnlocking && (
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    r={radius}
+                    fill="transparent"
+                    stroke="rgba(0,0,0,0.1)"
+                    strokeWidth="6"
+                  />
+                )}
+                {/* 进度条 (Progress) */}
                 <circle
                   cx="50%"
                   cy="50%"
                   r={radius}
                   fill="transparent"
-                  stroke={isLocked ? "white" : "#ef4444"}
-                  strokeWidth="4"
+                  stroke={isUnlocking ? "#dc2626" : (isLocked ? "white" : "#ef4444")}
+                  strokeWidth={isUnlocking ? "6" : "4"}
                   strokeDasharray={circumference}
-                  style={{ strokeDashoffset, transition: isLocked ? 'none' : 'stroke-dashoffset 16ms linear' }}
+                  style={{ 
+                    strokeDashoffset, 
+                    transition: isLocked ? 'none' : 'stroke-dashoffset 16ms linear',
+                    filter: isUnlocking 
+                      ? 'drop-shadow(0 0 4px rgba(0,0,0,0.2)) drop-shadow(0 0 8px rgba(220,38,38,0.4))' 
+                      : 'none'
+                  }}
                   strokeLinecap="round"
                 />
               </svg>
