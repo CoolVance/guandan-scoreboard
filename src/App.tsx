@@ -72,28 +72,28 @@ const safeVibrate = (pattern: number | number[]) => {
 
 // --- 辅助界面组件 ---
 
-const TopModeIcon = () => (
-  <div className="flex gap-1 h-5 items-center justify-center">
-    <div className="w-1.5 h-full bg-red-500 rounded-full shadow-sm" />
-    <div className="w-1.5 h-full bg-yellow-400 rounded-full shadow-sm" />
-    <div className="w-1.5 h-full bg-blue-500 rounded-full shadow-sm" />
+const TopModeIcon = ({ active }: { active?: boolean }) => (
+  <div className={`flex gap-1 h-5 items-center justify-center transition-transform duration-300 ${active ? 'scale-110' : 'scale-100'}`}>
+    <div className={`w-1.5 h-full rounded-full shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-red-500'}`} />
+    <div className={`w-1.5 h-full rounded-full shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-yellow-400'}`} />
+    <div className={`w-1.5 h-full rounded-full shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-blue-500'}`} />
   </div>
 );
 
-const BottomModeIcon = () => (
-  <div className="relative w-5 h-5 flex items-center justify-center scale-90">
+const BottomModeIcon = ({ active }: { active?: boolean }) => (
+  <div className={`relative w-5 h-5 flex items-center justify-center transition-transform duration-300 ${active ? 'scale-110' : 'scale-90'}`}>
     {/* 垂直线 (红) */}
     <div className="absolute w-1.5 h-full flex flex-col justify-between">
-      <div className="w-full h-[30%] bg-red-500 rounded-sm shadow-sm" />
-      <div className="w-full h-[30%] bg-red-500 rounded-sm shadow-sm" />
+      <div className={`w-full h-[35%] rounded-sm shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-red-500'}`} />
+      <div className={`w-full h-[35%] rounded-sm shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-red-500'}`} />
     </div>
     {/* 水平线 (蓝) */}
     <div className="absolute h-1.5 w-full flex justify-between items-center">
-      <div className="h-full w-[30%] bg-blue-500 rounded-sm shadow-sm" />
-      <div className="h-full w-[30%] bg-blue-500 rounded-sm shadow-sm" />
+      <div className={`h-full w-[35%] rounded-sm shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-blue-500'}`} />
+      <div className={`h-full w-[35%] rounded-sm shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-blue-500'}`} />
     </div>
     {/* 中心点 (灰) */}
-    <div className="z-10 w-1.5 h-1.5 bg-gray-300 rounded-full shadow-inner" />
+    <div className={`z-10 w-1.5 h-1.5 rounded-full shadow-inner transition-all duration-300 ${active ? 'bg-white scale-125' : 'bg-gray-300'}`} />
   </div>
 );
 
@@ -1089,7 +1089,7 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
               onClick={() => { setIsOpen(false); onToggleUiMode('top'); }} 
               className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${uiMode === 'top' ? 'bg-green-400 text-white' : 'bg-white text-blue-600'}`}
             >
-              <TopModeIcon />
+              <TopModeIcon active={uiMode === 'top'} />
             </button>
 
             {/* 切换仅底部模式 (十字图标) */}
@@ -1097,7 +1097,7 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
               onClick={() => { setIsOpen(false); onToggleUiMode('bottom'); }} 
               className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${uiMode === 'bottom' ? 'bg-green-400 text-white' : 'bg-white text-blue-600'}`}
             >
-              <BottomModeIcon />
+              <BottomModeIcon active={uiMode === 'bottom'} />
             </button>
 
             {/* 语言切换 */}
