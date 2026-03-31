@@ -132,7 +132,7 @@ export default function App() {
   const [history, setHistory] = useState<ScoreRecord[]>([]);
   const [historyView, setHistoryView] = useState<'list' | 'table'>('list');
   const [scoringMode, setScoringMode] = useState<'auto' | 'manual'>('auto');
-  const [uiMode, setUiMode] = useState<'full' | 'simple'>('full');
+  const [uiMode, setUiMode] = useState<'full' | 'top' | 'bottom'>('full');
 
   // 悬浮按钮位置状态 (初始化为 null，组件挂载后计算屏幕边缘)
   const [fabPos, setFabPos] = useState<{ x: number, y: number } | null>(null);
@@ -179,6 +179,7 @@ export default function App() {
         
         if (elapsed > AUTO_LOCK_TIME) {
           setIsLocked(true);
+          setIsDrawerOpen(false); // 自动锁定时关闭菜单
           setLockProgress(0);
         }
       } else {
@@ -459,8 +460,8 @@ export default function App() {
       {/* 可视内容容器 (始终保持 100% 清晰) */}
       <div className={`flex-1 flex flex-col transition-all duration-700 ease-in-out`}>
         {/* 顶部区域 */}
-        {showTopControls && (
-          <div className="flex-none h-[40%] p-3 grid grid-cols-3 gap-3 pt-4">
+        {(uiMode === 'full' || uiMode === 'top') && (
+          <div className={`flex-none p-3 grid grid-cols-3 gap-3 pt-4 transition-all duration-500 ${uiMode === 'top' ? 'h-full flex-1' : 'h-[40%]'}`}>
             <SwipeControl
               className="h-full" colorClass="bg-red-500 text-white"
               onSwipeUp={() => handleCardChange('left', 1)}
@@ -468,9 +469,9 @@ export default function App() {
               valueKey={`left-${leftCardIdx}`}
             >
               <div className="text-sm opacity-80 mb-2">{t('redLevel')}</div>
-              <div className="text-6xl font-bold">{CARD_SEQUENCE[leftCardIdx]}</div>
-              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
-              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
+              <div className={`font-bold transition-all ${uiMode === 'top' ? 'text-9xl' : 'text-6xl'}`}>{CARD_SEQUENCE[leftCardIdx]}</div>
+              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={uiMode === 'top' ? 32 : 20} />}</div>
+              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={uiMode === 'top' ? 32 : 20} />}</div>
             </SwipeControl>
 
             <SwipeControl
@@ -480,9 +481,9 @@ export default function App() {
               valueKey={`middle-${middleNum}`}
             >
               <div className="text-sm opacity-80 mb-2">{t('round')}</div>
-              <div className="text-7xl font-mono font-bold">{middleNum}</div>
-              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
-              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
+              <div className={`font-mono font-bold transition-all ${uiMode === 'top' ? 'text-9xl' : 'text-7xl'}`}>{middleNum}</div>
+              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={uiMode === 'top' ? 32 : 20} />}</div>
+              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={uiMode === 'top' ? 32 : 20} />}</div>
             </SwipeControl>
 
             <SwipeControl
@@ -492,16 +493,16 @@ export default function App() {
               valueKey={`right-${rightCardIdx}`}
             >
               <div className="text-sm opacity-80 mb-2">{t('blueLevel')}</div>
-              <div className="text-6xl font-bold">{CARD_SEQUENCE[rightCardIdx]}</div>
-              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={20} />}</div>
-              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={20} />}</div>
+              <div className={`font-bold transition-all ${uiMode === 'top' ? 'text-9xl' : 'text-6xl'}`}>{CARD_SEQUENCE[rightCardIdx]}</div>
+              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={uiMode === 'top' ? 32 : 20} />}</div>
+              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={uiMode === 'top' ? 32 : 20} />}</div>
             </SwipeControl>
           </div>
         )}
 
         {/* 底部十字计分盘 */}
-        {uiMode === 'full' && (
-          <div className="flex-1 p-3 pb-8 relative">
+        {(uiMode === 'full' || uiMode === 'bottom') && (
+          <div className={`flex-1 p-3 pb-8 relative transition-all duration-500 ${uiMode === 'bottom' ? 'h-full' : ''}`}>
             <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
 
               <div className="col-start-2 row-start-1">
@@ -539,7 +540,7 @@ export default function App() {
                 {/* 如果全空，显示历史图标 */}
                 {!aggregatedRemarks.N && !aggregatedRemarks.S && !aggregatedRemarks.W && !aggregatedRemarks.E && (
                   <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-                    <History size={24} />
+                    <History size={uiMode === 'bottom' ? 48 : 24} />
                   </div>
                 )}
               </div>
@@ -891,6 +892,7 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
     // 情况 A: 当前未锁定 -> 点击立即锁定
     if (!isLocked) {
       setIsLocked(true);
+      setIsOpen(false); // 手动锁定时关闭菜单
       safeVibrate(10);
       return;
     }
