@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy and Release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -47,3 +47,36 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # --- 新增: 准备 Release 产物 ---
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p releases
+          VERSION=$(node -p "require('./package.json').version")
+          REPO_NAME=$(node -p "require('./package.json').name")
+          
+          # 创建不同架构标识的包 (内容均为 dist 静态文件)
+          tar -czf "releases/${REPO_NAME}-${VERSION}-linux-amd64.tar.gz" -C dist .
+          tar -czf "releases/${REPO_NAME}-${VERSION}-linux-arm64.tar.gz" -C dist .
+          tar -czf "releases/${REPO_NAME}-${VERSION}-linux-386.tar.gz" -C dist .
+          tar -czf "releases/${REPO_NAME}-${VERSION}-linux-armv7.tar.gz" -C dist .
+          
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}-${{ github.run_number }}
+          name: Release v${{ env.VERSION }} (Build ${{ github.run_number }})
+          draft: false
+          prerelease: false
+          files: |
+            releases/*.tar.gz
+          body: |
+            Automatically generated release for version ${{ env.VERSION }}.
+            Includes static assets for various platforms (amd64, arm64, 386, armv7).
+            
+            Built from commit: ${{ github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
