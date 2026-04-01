@@ -73,27 +73,27 @@ const safeVibrate = (pattern: number | number[]) => {
 // --- 辅助界面组件 ---
 
 const TopModeIcon = ({ active }: { active?: boolean }) => (
-  <div className={`flex gap-1 h-5 items-center justify-center transition-transform duration-300 ${active ? 'scale-110' : 'scale-100'}`}>
-    <div className={`w-1.5 h-full rounded-full shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-red-500'}`} />
-    <div className={`w-1.5 h-full rounded-full shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-yellow-400'}`} />
-    <div className={`w-1.5 h-full rounded-full shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-blue-500'}`} />
+  <div className={`flex gap-0.5 h-5 items-center justify-center transition-all duration-500 ${active ? 'scale-110 opacity-100 rotate-0' : 'scale-50 opacity-0 -rotate-90'}`}>
+    <div className={`w-1.5 h-full rounded-full shadow-sm transition-all duration-500 ${active ? 'bg-white' : 'bg-red-500'}`} />
+    <div className={`w-1.5 h-full rounded-full shadow-sm transition-all duration-500 ${active ? 'bg-white' : 'bg-yellow-400'}`} />
+    <div className={`w-1.5 h-full rounded-full shadow-sm transition-all duration-500 ${active ? 'bg-white' : 'bg-blue-500'}`} />
   </div>
 );
 
 const BottomModeIcon = ({ active }: { active?: boolean }) => (
-  <div className={`relative w-5 h-5 flex items-center justify-center transition-transform duration-300 ${active ? 'scale-110' : 'scale-90'}`}>
+  <div className={`relative w-6 h-6 flex items-center justify-center transition-all duration-500 ${active ? 'scale-100 opacity-100 rotate-0' : 'scale-50 opacity-0 rotate-90'}`}>
     {/* 垂直线 (红) */}
     <div className="absolute w-1.5 h-full flex flex-col justify-between">
-      <div className={`w-full h-[35%] rounded-sm shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-red-500'}`} />
-      <div className={`w-full h-[35%] rounded-sm shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-red-500'}`} />
+      <div className={`w-full h-[35%] rounded-sm shadow-sm transition-all duration-500 ${active ? 'bg-white' : 'bg-red-500'}`} />
+      <div className={`w-full h-[35%] rounded-sm shadow-sm transition-all duration-500 ${active ? 'bg-white' : 'bg-red-500'}`} />
     </div>
     {/* 水平线 (蓝) */}
     <div className="absolute h-1.5 w-full flex justify-between items-center">
-      <div className={`h-full w-[35%] rounded-sm shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-blue-500'}`} />
-      <div className={`h-full w-[35%] rounded-sm shadow-sm transition-all duration-300 ${active ? 'bg-white' : 'bg-blue-500'}`} />
+      <div className={`h-full w-[35%] rounded-sm shadow-sm transition-all duration-500 ${active ? 'bg-white' : 'bg-blue-500'}`} />
+      <div className={`h-full w-[35%] rounded-sm shadow-sm transition-all duration-500 ${active ? 'bg-white' : 'bg-blue-500'}`} />
     </div>
     {/* 中心点 (灰) */}
-    <div className={`z-10 w-1.5 h-1.5 rounded-full shadow-inner transition-all duration-300 ${active ? 'bg-white scale-125' : 'bg-gray-300'}`} />
+    <div className={`z-10 w-1.5 h-1.5 rounded-full shadow-inner transition-all duration-500 ${active ? 'bg-white scale-125' : 'bg-gray-300'}`} />
   </div>
 );
 
@@ -176,6 +176,21 @@ export default function App() {
 
   // 教程状态
   const [tutorialStep, setTutorialStep] = useState<number>(-1); // -1 表示未开始
+  const preTutorialUiMode = useRef<typeof uiMode>(uiMode);
+
+  useEffect(() => {
+    if (tutorialStep >= 0) {
+      // 开启教程时：记录当前模式并强制切回全屏
+      if (uiMode !== 'full' && preTutorialUiMode.current === 'full') {
+        preTutorialUiMode.current = uiMode;
+      }
+      setUiMode('full');
+    } else if (isLoaded) {
+      // 结束教程时：恢复之前的模式
+      setUiMode(preTutorialUiMode.current);
+    }
+  }, [tutorialStep]);
+
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -302,7 +317,7 @@ export default function App() {
       fabPos
     };
     localStorage.setItem('scoreboard_v5', JSON.stringify(data));
-  }, [leftCardIdx, rightCardIdx, middleNum, playerNames, history, historyView, lang, fabPos, isLoaded]);
+  }, [leftCardIdx, rightCardIdx, middleNum, playerNames, history, historyView, lang, fabPos, uiMode, isLoaded]);
 
   // 自动选择队友
   useEffect(() => {
@@ -483,104 +498,106 @@ export default function App() {
     <div className="h-screen w-full bg-white flex flex-col overflow-hidden font-sans text-gray-900 select-none relative">
       
       {/* 可视内容容器 (始终保持 100% 清晰) */}
-      <div className={`flex-1 flex flex-col transition-all duration-700 ease-in-out h-full`}>
-        {/* 顶部区域 */}
-        {showTopControls && (uiMode === 'full' || uiMode === 'top') && (
-          <div className={`flex-none p-3 grid grid-cols-3 gap-3 pt-4 transition-all duration-500 ${uiMode === 'top' ? 'h-full flex-1' : 'h-[40%]'}`}>
-            <SwipeControl
-              className="h-full" colorClass="bg-red-500 text-white"
-              onSwipeUp={() => handleCardChange('left', 1)}
-              onSwipeDown={() => handleCardChange('left', -1)}
-              valueKey={`left-${leftCardIdx}`}
-            >
-              <div className="text-sm opacity-80 mb-2">{t('redLevel')}</div>
-              <div className={`font-bold transition-all ${uiMode === 'top' ? 'text-9xl' : 'text-6xl'}`}>{CARD_SEQUENCE[leftCardIdx]}</div>
-              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={uiMode === 'top' ? 32 : 20} />}</div>
-              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={uiMode === 'top' ? 32 : 20} />}</div>
-            </SwipeControl>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* 顶部区域 (等级显示) */}
+        <div 
+          className={`flex-none p-3 grid grid-cols-3 gap-3 pt-4 transition-all duration-500 ease-in-out overflow-hidden ${
+            uiMode === 'top' ? 'h-full opacity-100' : 
+            uiMode === 'bottom' ? 'h-0 p-0 opacity-0 pointer-events-none' : 
+            'h-[40%] opacity-100'
+          }`}
+        >
+          <SwipeControl
+            className="h-full" colorClass="bg-red-500 text-white"
+            onSwipeUp={() => handleCardChange('left', 1)}
+            onSwipeDown={() => handleCardChange('left', -1)}
+            valueKey={`left-${leftCardIdx}`}
+          >
+            <div className="text-sm opacity-80 mb-2">{t('redLevel')}</div>
+            <div className={`font-bold transition-all ${uiMode === 'top' ? 'text-9xl' : 'text-6xl'}`}>{CARD_SEQUENCE[leftCardIdx]}</div>
+            <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={uiMode === 'top' ? 32 : 20} />}</div>
+            <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={uiMode === 'top' ? 32 : 20} />}</div>
+          </SwipeControl>
 
-            <SwipeControl
-              className="h-full" colorClass="bg-yellow-400 text-yellow-900"
-              onSwipeUp={() => setMiddleNum(p => Math.max(1, p + 1))}
-              onSwipeDown={() => setMiddleNum(p => Math.max(1, p - 1))}
-              valueKey={`middle-${middleNum}`}
-            >
-              <div className="text-sm opacity-80 mb-2">{t('round')}</div>
-              <div className={`font-mono font-bold transition-all ${uiMode === 'top' ? 'text-9xl' : 'text-7xl'}`}>{middleNum}</div>
-              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={uiMode === 'top' ? 32 : 20} />}</div>
-              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={uiMode === 'top' ? 32 : 20} />}</div>
-            </SwipeControl>
+          <SwipeControl
+            className="h-full" colorClass="bg-yellow-400 text-yellow-900"
+            onSwipeUp={() => setMiddleNum(p => Math.max(1, p + 1))}
+            onSwipeDown={() => setMiddleNum(p => Math.max(1, p - 1))}
+            valueKey={`middle-${middleNum}`}
+          >
+            <div className="text-sm opacity-80 mb-2">{t('round')}</div>
+            <div className={`font-mono font-bold transition-all ${uiMode === 'top' ? 'text-9xl' : 'text-7xl'}`}>{middleNum}</div>
+            <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={uiMode === 'top' ? 32 : 20} />}</div>
+            <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={uiMode === 'top' ? 32 : 20} />}</div>
+          </SwipeControl>
 
-            <SwipeControl
-              className="h-full" colorClass="bg-blue-500 text-white"
-              onSwipeUp={() => handleCardChange('right', 1)}
-              onSwipeDown={() => handleCardChange('right', -1)}
-              valueKey={`right-${rightCardIdx}`}
-            >
-              <div className="text-sm opacity-80 mb-2">{t('blueLevel')}</div>
-              <div className={`font-bold transition-all ${uiMode === 'top' ? 'text-9xl' : 'text-6xl'}`}>{CARD_SEQUENCE[rightCardIdx]}</div>
-              <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={uiMode === 'top' ? 32 : 20} />}</div>
-              <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={uiMode === 'top' ? 32 : 20} />}</div>
-            </SwipeControl>
-          </div>
-        )}
+          <SwipeControl
+            className="h-full" colorClass="bg-blue-500 text-white"
+            onSwipeUp={() => handleCardChange('right', 1)}
+            onSwipeDown={() => handleCardChange('right', -1)}
+            valueKey={`right-${rightCardIdx}`}
+          >
+            <div className="text-sm opacity-80 mb-2">{t('blueLevel')}</div>
+            <div className={`font-bold transition-all ${uiMode === 'top' ? 'text-9xl' : 'text-6xl'}`}>{CARD_SEQUENCE[rightCardIdx]}</div>
+            <div className="absolute top-2 opacity-50">{!isLocked && <ChevronUp size={uiMode === 'top' ? 32 : 20} />}</div>
+            <div className="absolute bottom-2 opacity-50">{!isLocked && <ChevronDown size={uiMode === 'top' ? 32 : 20} />}</div>
+          </SwipeControl>
+        </div>
 
-        {/* 底部十字计分盘 */}
-        {(uiMode === 'full' || uiMode === 'bottom') && (
-          <div className={`p-3 pb-8 relative transition-all duration-500 ${uiMode === 'bottom' ? 'h-full flex-1' : 'flex-1'}`}>
-            <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
+        {/* 底部十字计分盘区域 */}
+        <div 
+          className={`relative p-3 pb-8 transition-all duration-500 ease-in-out overflow-hidden ${
+            uiMode === 'bottom' ? 'h-full flex-1 opacity-100' : 
+            uiMode === 'top' ? 'h-0 p-0 opacity-0 pointer-events-none' : 
+            'flex-1 opacity-100'
+          }`}
+        >
+          <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-2">
+            <div className="col-start-2 row-start-1">
+              <PlayerButton config={INITIAL_PLAYERS.N} name={playerNames.N} score={totalScores.N} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('N'); setActiveModal('action'); } }} />
+            </div>
 
-              <div className="col-start-2 row-start-1">
-                <PlayerButton config={INITIAL_PLAYERS.N} name={playerNames.N} score={totalScores.N} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('N'); setActiveModal('action'); } }} />
+            <div className="col-start-1 row-start-2">
+              <PlayerButton config={INITIAL_PLAYERS.W} name={playerNames.W} score={totalScores.W} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('W'); setActiveModal('action'); } }} />
+            </div>
+
+            {/* 中间灰色区域 - 三段式布局 */}
+            <div className="col-start-2 row-start-2 bg-gray-200 rounded-xl shadow-inner relative active:bg-gray-300 transition-colors overflow-hidden flex flex-col text-xs"
+              onClick={() => setActiveModal('history')}>
+
+              <div className="flex-1 w-full border-b border-gray-300 flex items-center justify-center relative px-1">
+                <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.N}</div>
               </div>
 
-              <div className="col-start-1 row-start-2">
-                <PlayerButton config={INITIAL_PLAYERS.W} name={playerNames.W} score={totalScores.W} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('W'); setActiveModal('action'); } }} />
-              </div>
-
-              {/* 中间灰色区域 - 三段式布局 */}
-              <div className="col-start-2 row-start-2 bg-gray-200 rounded-xl shadow-inner relative active:bg-gray-300 transition-colors overflow-hidden flex flex-col text-xs"
-                onClick={() => setActiveModal('history')}>
-
-                {/* 上部：北 */}
-                <div className="flex-1 w-full border-b border-gray-300 flex items-center justify-center relative px-1">
-                  <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.N}</div>
+              <div className="flex-1 w-full flex border-b border-gray-300">
+                <div className="flex-1 h-full border-r border-gray-300 flex items-center justify-center relative px-1">
+                  <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.W}</div>
                 </div>
-
-                {/* 中部：西 | 东 */}
-                <div className="flex-1 w-full flex border-b border-gray-300">
-                  <div className="flex-1 h-full border-r border-gray-300 flex items-center justify-center relative px-1">
-                    <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.W}</div>
-                  </div>
-                  <div className="flex-1 h-full flex items-center justify-center relative px-1">
-                    <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.E}</div>
-                  </div>
+                <div className="flex-1 h-full flex items-center justify-center relative px-1">
+                  <div className="text-blue-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.E}</div>
                 </div>
+              </div>
 
-                {/* 下部：南 */}
-                <div className="flex-1 w-full flex items-center justify-center relative px-1">
-                  <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.S}</div>
+              <div className="flex-1 w-full flex items-center justify-center relative px-1">
+                <div className="text-red-600 font-bold text-center line-clamp-1 overflow-hidden w-full" style={{ wordBreak: 'break-all' }}>{aggregatedRemarks.S}</div>
+              </div>
+
+              {!aggregatedRemarks.N && !aggregatedRemarks.S && !aggregatedRemarks.W && !aggregatedRemarks.E && (
+                <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
+                  <History size={uiMode === 'bottom' ? 48 : 24} />
                 </div>
+              )}
+            </div>
 
-                {/* 如果全空，显示历史图标 */}
-                {!aggregatedRemarks.N && !aggregatedRemarks.S && !aggregatedRemarks.W && !aggregatedRemarks.E && (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-                    <History size={uiMode === 'bottom' ? 48 : 24} />
-                  </div>
-                )}
-              </div>
+            <div className="col-start-3 row-start-2">
+              <PlayerButton config={INITIAL_PLAYERS.E} name={playerNames.E} score={totalScores.E} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('E'); setActiveModal('action'); } }} />
+            </div>
 
-              <div className="col-start-3 row-start-2">
-                <PlayerButton config={INITIAL_PLAYERS.E} name={playerNames.E} score={totalScores.E} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('E'); setActiveModal('action'); } }} />
-              </div>
-
-              <div className="col-start-2 row-start-3">
-                <PlayerButton config={INITIAL_PLAYERS.S} name={playerNames.S} score={totalScores.S} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('S'); setActiveModal('action'); } }} />
-              </div>
-
+            <div className="col-start-2 row-start-3">
+              <PlayerButton config={INITIAL_PLAYERS.S} name={playerNames.S} score={totalScores.S} onClick={() => { if (scoringMode === 'manual') { setActiveModal('score'); } else { setSelectedPlayer('S'); setActiveModal('action'); } }} />
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* --- 能量喷发/聚拢霓虹动效层 (Energy Burst/Gather Iris) --- */}
@@ -1009,7 +1026,7 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
         onTouchEnd={handleEnd}
         onMouseDown={handleMouseDown}
       >
-        <div className="relative flex flex-col gap-2">
+        <div className={`relative flex ${pos.y > window.innerHeight / 2 ? 'flex-col-reverse' : 'flex-col'} gap-2`}>
           {/* 锁定按钮 */}
           <button
             className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white transition-all relative border-2 border-white ${isLocked ? (unlockProgress > 0 ? 'bg-red-600 scale-110' : 'bg-red-500 animate-[pulse_2s_infinite] ring-4 ring-transparent') : 'bg-gray-400'}`}
@@ -1065,7 +1082,16 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
                 />
               </svg>
             )}
-            {isLocked ? <Lock size={20} /> : <Unlock size={20} />}
+            <div className="relative w-5 h-5 flex items-center justify-center">
+              <Lock 
+                size={20} 
+                className={`absolute transition-all duration-300 transform ${isLocked ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-50'}`} 
+              />
+              <Unlock 
+                size={20} 
+                className={`absolute transition-all duration-300 transform ${isLocked ? 'opacity-0 -rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'}`} 
+              />
+            </div>
           </button>
 
           {/* 菜单按钮 */}
@@ -1079,39 +1105,48 @@ const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels,
               }
             }}
           >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
+            <div className="relative w-6 h-6 flex items-center justify-center">
+              <Menu 
+                size={24} 
+                className={`absolute transition-all duration-300 transform ${isOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'}`} 
+              />
+              <X 
+                size={24} 
+                className={`absolute transition-all duration-300 transform ${isOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`} 
+              />
+            </div>
           </button>
 
           {/* 展开的菜单项 */}
-          <div className={`absolute ${pos.y > window.innerHeight / 2 ? 'bottom-28 origin-bottom' : 'top-28 origin-top'} left-0 w-12 flex flex-col gap-2 transition-all duration-200 ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
-            {/* 切换仅顶部模式 (RGB 条图标) */}
+          <div className={`absolute ${pos.y > window.innerHeight / 2 ? 'bottom-28 origin-bottom flex-col-reverse' : 'top-28 origin-top flex-col'} left-0 w-12 flex gap-2 transition-all duration-200 ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
             <button 
-              onClick={() => { setIsOpen(false); onToggleUiMode('top'); }} 
-              className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${uiMode === 'top' ? 'bg-green-400 text-white' : 'bg-white text-blue-600'}`}
+              key="mode"
+              onClick={() => { 
+                const nextMode = uiMode === 'full' ? 'top' : (uiMode === 'top' ? 'bottom' : 'full');
+                onToggleUiMode(nextMode); 
+              }} 
+              className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-all duration-300 relative overflow-hidden ${uiMode !== 'full' ? 'bg-green-400 text-white' : 'bg-white text-blue-600'}`}
             >
-              <TopModeIcon active={uiMode === 'top'} />
-            </button>
-
-            {/* 切换仅底部模式 (十字图标) */}
-            <button 
-              onClick={() => { setIsOpen(false); onToggleUiMode('bottom'); }} 
-              className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-colors ${uiMode === 'bottom' ? 'bg-green-400 text-white' : 'bg-white text-blue-600'}`}
-            >
-              <BottomModeIcon active={uiMode === 'bottom'} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <TopModeIcon active={uiMode === 'top' || uiMode === 'full'} />
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <BottomModeIcon active={uiMode === 'bottom'} />
+              </div>
             </button>
 
             {/* 语言切换 */}
-            <button onClick={() => { setIsOpen(false); onToggleLang(); }} className="w-12 h-12 bg-white rounded-full shadow-md hover:bg-gray-50 flex items-center justify-center text-blue-600">
+            <button key="lang" onClick={() => { setIsOpen(false); onToggleLang(); }} className="w-12 h-12 bg-white rounded-full shadow-md hover:bg-gray-50 flex items-center justify-center text-blue-600">
               <Languages size={20} />
             </button>
 
             {/* 重置级别 */}
-            <button onClick={() => { setIsOpen(false); onResetLevels(); }} className="w-12 h-12 bg-white text-red-600 rounded-full shadow-md hover:bg-red-50 flex items-center justify-center">
+            <button key="reset" onClick={() => { setIsOpen(false); onResetLevels(); }} className="w-12 h-12 bg-white text-red-600 rounded-full shadow-md hover:bg-red-50 flex items-center justify-center">
               <RotateCw size={20} />
             </button>
 
             {/* 教程 */}
-            <button onClick={() => { setIsOpen(false); onStartTutorial(); }} className="w-12 h-12 bg-white text-blue-600 rounded-full shadow-md hover:bg-blue-50 flex items-center justify-center">
+            <button key="tutorial" onClick={() => { setIsOpen(false); onStartTutorial(); }} className="w-12 h-12 bg-white text-blue-600 rounded-full shadow-md hover:bg-blue-50 flex items-center justify-center">
               <AlertCircle size={20} />
             </button>
           </div>
