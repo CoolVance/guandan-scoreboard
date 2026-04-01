@@ -194,7 +194,6 @@ export default function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [showTopControls, setShowTopControls] = useState(true);
   const lastActivity = useRef(Date.now());
 
   const [lockProgress, setLockProgress] = useState(0);
@@ -658,8 +657,6 @@ export default function App() {
           onToggleLang={toggleLang}
           onResetLevels={handleResetLevels}
           onStartTutorial={startTutorial}
-          showTopControls={showTopControls}
-          onToggleTopControls={() => setShowTopControls(prev => !prev)}
           uiMode={uiMode}
           onToggleUiMode={(target: 'top' | 'bottom') => {
             setUiMode(prev => (prev === target ? 'full' : target));
@@ -807,7 +804,7 @@ export default function App() {
 }
 
 // --- 可拖动抽屉组件 ---
-const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, lockProgress, isOpen, setIsOpen, showTopControls, onToggleTopControls, uiMode, onToggleUiMode, resetActivity }: any) => {
+const DraggableDrawer = ({ initialPos, onPosChange, onToggleLang, onResetLevels, onStartTutorial, isLocked, setIsLocked, lockProgress, isOpen, setIsOpen, uiMode, onToggleUiMode, resetActivity }: any) => {
   // const [isOpen, setIsOpen] = useState(false); // Moved to parent
   const [pos, setPos] = useState(initialPos);
   const [isDraggingState, setIsDraggingState] = useState(false);
