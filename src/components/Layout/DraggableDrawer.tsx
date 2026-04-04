@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Unlock, Menu, X, Languages, RotateCw, AlertCircle, CloudOff } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Lock, Unlock, Menu, X, Languages, RotateCw, AlertCircle, CloudOff, Cloud, Server } from 'lucide-react';
 import { TopModeIcon, BottomModeIcon } from '../Common/Icons';
 import { useNetwork } from '../../hooks/useNetwork';
+import { useI18n } from '../../hooks/useI18n';
 
 interface DraggableDrawerProps {
   initialPos: { x: number, y: number };
@@ -14,17 +15,41 @@ interface DraggableDrawerProps {
   setIsOpen: (open: boolean) => void;
   onToggleLang: () => void;
   security: any;
+  setConfirmModal?: (config: any) => void;
+  updateStatus?: 'latest' | 'available' | 'failed' | 'offline';
+  isTutorialActive?: boolean;
 }
 
 export const DraggableDrawer = ({
   initialPos, onPosChange, onResetLevels, onStartTutorial,
   uiMode, onToggleUiMode, isOpen, setIsOpen, onToggleLang,
-  security
+  security, setConfirmModal, updateStatus = 'latest',
+  isTutorialActive = false
 }: DraggableDrawerProps) => {
   const { isOnline } = useNetwork();
+  const { t } = useI18n();
   const { isLocked, setIsLocked, lockProgress, unlockProgress, startUnlocking, stopUnlocking } = security;
   const [pos, setPos] = useState(initialPos);
   const [isDraggingState, setIsDraggingState] = useState(false);
+
+  const isCloudMode = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.hostname.includes('inin.workers.dev');
+  }, []);
+
+  const handleModeClick = () => {
+    if (setConfirmModal) {
+      setConfirmModal({
+        isOpen: true,
+        message: t('confirmForceRefresh'),
+        onConfirm: () => {
+          window.location.reload();
+        }
+      });
+    } else if (window.confirm(t('confirmForceRefresh'))) {
+      window.location.reload();
+    }
+  };
 
   useEffect(() => {
     setPos(initialPos);
@@ -191,7 +216,7 @@ export const DraggableDrawer = ({
           </button>
 
           <div className={`absolute ${pos.y > window.innerHeight / 2 ? 'bottom-28 origin-bottom flex-col-reverse' : 'top-28 origin-top flex-col'} left-0 w-12 flex gap-2 transition-all duration-200 ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
-            {!isOnline && (
+            {!isOnline && !isTutorialActive && (
               <div className="w-12 h-12 bg-amber-100 border border-amber-200 rounded-full flex items-center justify-center text-amber-600 animate-pulse" title="离线模式">
                 <CloudOff size={20} />
               </div>
@@ -201,6 +226,24 @@ export const DraggableDrawer = ({
               <div className="absolute inset-0 flex items-center justify-center"><BottomModeIcon active={uiMode === 'bottom'} /></div>
             </button>
             <button onClick={() => { setIsOpen(false); onToggleLang(); }} className="w-12 h-12 bg-white rounded-full shadow-md hover:bg-gray-50 flex items-center justify-center text-blue-600"><Languages size={20} /></button>
+            <button 
+              onClick={handleModeClick} 
+              className={`w-12 h-12 rounded-full shadow-md flex items-center justify-center transition-all relative ${isCloudMode ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600 active:bg-blue-200'}`}
+              title={updateStatus === 'available' ? t('statusUpdateAvailable') : (updateStatus === 'failed' ? t('statusCheckFailed') : (updateStatus === 'offline' ? t('statusOffline') : t('statusOnline')))}
+            >
+              {isCloudMode ? <Cloud size={20} /> : <Server size={20} />}
+              
+              {/* 状态指示点 - 始终显示 */}
+              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                {updateStatus === 'available' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
+                <span className={`relative inline-flex rounded-full h-4 w-4 border-2 border-white shadow-sm ${
+                  updateStatus === 'available' ? 'bg-green-500' : 
+                  updateStatus === 'failed' ? 'bg-gray-400' : 
+                  updateStatus === 'offline' ? 'bg-black' :
+                  'bg-green-500' // latest 状态显示实心绿点
+                }`}></span>
+              </span>
+            </button>
             <button onClick={() => { setIsOpen(false); onResetLevels(); }} className="w-12 h-12 bg-white text-red-600 rounded-full shadow-md hover:bg-red-50 flex items-center justify-center"><RotateCw size={20} /></button>
             <button onClick={() => { setIsOpen(false); onStartTutorial(); }} className="w-12 h-12 bg-white text-blue-600 rounded-full shadow-md hover:bg-blue-50 flex items-center justify-center"><AlertCircle size={20} /></button>
           </div>

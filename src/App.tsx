@@ -9,6 +9,7 @@ import { CARD_SEQUENCE } from './types/scoring';
 import { useScoring } from './hooks/useScoring';
 import { useI18n } from './hooks/useI18n';
 import { useSecurity } from './hooks/useSecurity';
+import { useNetwork } from './hooks/useNetwork';
 import { storageAdapter } from './utils/storage';
 
 // Components
@@ -24,12 +25,17 @@ import { PWAUpdatePrompt } from './components/Layout/PWAUpdatePrompt';
 
 // --- 类型定义 ---
 
+type UpdateStatus = 'latest' | 'available' | 'failed' | 'offline';
+
 interface InternalPlayerConfig extends PlayerConfig {
   id: PlayerId;
   defaultName: string;
   color: 'red' | 'blue';
   position: 'top' | 'bottom' | 'left' | 'right';
 }
+
+// --- 常量 ---
+const APP_VERSION = '2.1.0';
 
 const INITIAL_PLAYERS: Record<PlayerId, InternalPlayerConfig> = {
   N: { id: 'N', defaultName: 'north', color: 'red', position: 'top' },
@@ -53,8 +59,94 @@ export default function App() {
   });
 
   const { isLocked, recordActivity } = security;
+  const { isOnline } = useNetwork();
 
   // --- 状态 ---
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('latest');
+  const [remoteVersion, setRemoteVersion] = useState<string | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  // --- 版本检测逻辑 ---
+  useEffect(() => {
+    const checkVersion = async () => {
+      if (!isOnline) {
+        setUpdateStatus('offline');
+        return;
+      }
+
+      try {
+        // 使用时间戳绕过缓存
+        const response = await fetch(`/version.json?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!response.ok) throw new Error('Fetch failed');
+        
+        const data = await response.json();
+        const latestVersion = data.version;
+        setRemoteVersion(latestVersion);
+
+        if (latestVersion !== APP_VERSION) {
+          setUpdateStatus('available');
+          
+          const skippedVersion = localStorage.getItem('skipped_version');
+          const lastAttempted = sessionStorage.getItem('last_attempted_version');
+
+          // 只有既没跳过，且在本次会话中还没尝试更新过该版本时，才弹窗
+          if (skippedVersion !== latestVersion && lastAttempted !== latestVersion) {
+            setShowUpdateModal(true);
+          }
+        } else {
+          setUpdateStatus('latest');
+          sessionStorage.removeItem('last_attempted_version'); // 更新成功，清除标记
+        }
+      } catch (err) {
+        console.error('Version check failed:', err);
+        setUpdateStatus('failed');
+      }
+    };
+
+    if (i18nLoaded) {
+      checkVersion();
+    }
+  }, [isOnline, i18nLoaded]);
+
+  const handleUpdateNow = async () => {
+    if (remoteVersion) {
+      // 记录尝试更新的版本，防止刷新后立即再次弹窗
+      sessionStorage.setItem('last_attempted_version', remoteVersion);
+    }
+    
+    setShowUpdateModal(false);
+    
+    // 强制清理所有能删的缓存
+    try {
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(name => caches.delete(name)));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
+      }
+    } catch (e) {
+      console.error('Cleanup failed:', e);
+    }
+
+    // 强制带随机参数刷新，确保穿透浏览器磁盘缓存
+    const url = new URL(window.location.href);
+    url.searchParams.set('reload_t', Date.now().toString());
+    window.location.replace(url.toString());
+  };
+
+  const handleSkipVersion = () => {
+    if (remoteVersion) {
+      localStorage.setItem('skipped_version', remoteVersion);
+    }
+    setShowUpdateModal(false);
+  };
+
   const [playerNames, setPlayerNames] = useState<Record<PlayerId, string>>({
     N: '北', S: '南', W: '西', E: '东'
   });
@@ -129,7 +221,7 @@ export default function App() {
   }, [i18nLoaded]);
 
   useEffect(() => {
-    if (tutorialStep >= 2 && tutorialStep <= 4) setIsDrawerOpen(true);
+    if (tutorialStep >= 1 && tutorialStep <= 4) setIsDrawerOpen(true);
     else if (tutorialStep !== -1) setIsDrawerOpen(false);
   }, [tutorialStep]);
 
@@ -257,8 +349,29 @@ export default function App() {
           initialPos={fabPos} onPosChange={setFabPos} onResetLevels={handleResetLevels} onStartTutorial={() => setTutorialStep(0)}
           uiMode={uiMode} onToggleUiMode={(target: 'full' | 'top' | 'bottom') => setUiMode(prev => (prev === target ? 'full' : target))}
           isOpen={isDrawerOpen} setIsOpen={setIsDrawerOpen} onToggleLang={() => setActiveModal('lang')}
-          security={security}
+          security={security} setConfirmModal={setConfirmModal}
+          updateStatus={updateStatus}
+          isTutorialActive={tutorialStep >= 0}
         />
+      )}
+
+      {showUpdateModal && remoteVersion && (
+        <div className="fixed inset-0 bg-black/60 z-[130] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowUpdateModal(false)}>
+          <div className="bg-white w-full max-w-xs rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center" onClick={e => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 animate-bounce">
+              <ChevronUp size={32} strokeWidth={3} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('updateAvailableTitle')}</h3>
+            <p className="text-gray-600 mb-6 leading-relaxed">{t('updateAvailableMsg', { version: remoteVersion })}</p>
+            <div className="flex flex-col gap-2 w-full">
+              <button onClick={handleUpdateNow} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg active:bg-blue-700 transition-colors">{t('updateNow')}</button>
+              <div className="flex gap-2">
+                <button onClick={() => setShowUpdateModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold active:bg-gray-200 text-sm">{t('updateLater')}</button>
+                <button onClick={handleSkipVersion} className="flex-1 py-3 bg-gray-50 text-gray-400 rounded-xl font-bold active:bg-gray-100 text-sm">{t('skipUpdate')}</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {confirmModal.isOpen && (
@@ -316,7 +429,7 @@ export default function App() {
         </Modal>
       )}
 
-      {tutorialStep >= 0 && <TutorialOverlay step={tutorialStep} t={t} onNext={() => setTutorialStep(prev => prev + 1)} onPrev={() => setTutorialStep(prev => Math.max(0, prev - 1))} onClose={() => { setTutorialStep(-1); localStorage.setItem('scoreboard_tutorial_seen', 'true'); }} fabPos={fabPos} onToggleLang={() => setActiveModal('lang')} />}
+      {tutorialStep >= 0 && <TutorialOverlay step={tutorialStep} t={t} onNext={() => setTutorialStep(prev => prev + 1)} onPrev={() => setTutorialStep(prev => Math.max(0, prev - 1))} onClose={() => { setTutorialStep(-1); localStorage.setItem('scoreboard_tutorial_seen', 'true'); }} fabPos={fabPos} onToggleLang={() => setActiveModal('lang')} version={APP_VERSION} />}
       
       <PWAUpdatePrompt />
     </div>

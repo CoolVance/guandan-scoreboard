@@ -8,15 +8,16 @@ interface TutorialOverlayProps {
   onClose: () => void;
   fabPos: { x: number, y: number } | null;
   onToggleLang: () => void;
+  version?: string;
 }
 
-export const TutorialOverlay = ({ step, t, onNext, onPrev, onClose, fabPos, onToggleLang }: TutorialOverlayProps) => {
+export const TutorialOverlay = ({ step, t, onNext, onPrev, onClose, fabPos, onToggleLang, version = 'v2.1.0' }: TutorialOverlayProps) => {
   // 定义每一步的目标区域和说明
   const tutorialSteps = [
     { target: 'fab', title: t('tutorialStep1Title'), desc: t('tutorialStep1Desc'), cardPosition: 'bottom' },
-    { target: 'lock', title: t('tutorialLockTitle'), desc: t('tutorialLockDesc'), cardPosition: 'bottom' },
     { target: 'layout', title: t('tutorialLayoutTitle'), desc: t('tutorialLayoutDesc'), cardPosition: 'bottom' },
     { target: 'lang', title: t('tutorialLangTitle'), desc: t('tutorialLangDesc'), cardPosition: 'bottom' },
+    { target: 'status', title: t('tutorialStatusTitle'), desc: t('tutorialStatusDesc'), cardPosition: 'bottom' },
     { target: 'reset', title: t('tutorialResetTitle'), desc: t('tutorialResetDesc'), cardPosition: 'bottom' },
     { target: 'levels', title: t('tutorialStep2Title'), desc: t('tutorialStep2Desc'), cardPosition: 'bottom' },
     { target: 'round', title: t('tutorialStep3Title'), desc: t('tutorialStep3Desc'), cardPosition: 'bottom' },
@@ -29,25 +30,23 @@ export const TutorialOverlay = ({ step, t, onNext, onPrev, onClose, fabPos, onTo
 
   const getHighlightStyle = () => {
     if (!currentStep) return {};
+    const isUp = fabPos && fabPos.y > window.innerHeight / 2;
     switch (currentStep.target) {
       case 'fab':
         if (!fabPos) return {};
         return { left: `${fabPos.x - 10}px`, top: `${fabPos.y - 10}px`, width: '72px', height: '120px', borderRadius: '36px' };
-      case 'lock':
-        if (!fabPos) return {};
-        return { left: `${fabPos.x}px`, top: `${fabPos.y}px`, width: '48px', height: '48px', borderRadius: '50%' };
       case 'layout':
         if (!fabPos) return {};
-        const isUpLayout = fabPos.y > window.innerHeight / 2;
-        return { left: `${fabPos.x}px`, top: isUpLayout ? `${fabPos.y - 56}px` : `${fabPos.y + 112}px`, width: '48px', height: '48px', borderRadius: '50%' };
+        return { left: `${fabPos.x}px`, top: isUp ? `${fabPos.y - 56}px` : `${fabPos.y + 112}px`, width: '48px', height: '48px', borderRadius: '50%' };
       case 'lang':
         if (!fabPos) return {};
-        const isUpLang = fabPos.y > window.innerHeight / 2;
-        return { left: `${fabPos.x}px`, top: isUpLang ? `${fabPos.y - 112}px` : `${fabPos.y + 168}px`, width: '48px', height: '48px', borderRadius: '50%' };
+        return { left: `${fabPos.x}px`, top: isUp ? `${fabPos.y - 112}px` : `${fabPos.y + 168}px`, width: '48px', height: '48px', borderRadius: '50%' };
+      case 'status':
+        if (!fabPos) return {};
+        return { left: `${fabPos.x}px`, top: isUp ? `${fabPos.y - 168}px` : `${fabPos.y + 224}px`, width: '48px', height: '48px', borderRadius: '50%' };
       case 'reset':
         if (!fabPos) return {};
-        const isUpReset = fabPos.y > window.innerHeight / 2;
-        return { left: `${fabPos.x}px`, top: isUpReset ? `${fabPos.y - 168}px` : `${fabPos.y + 224}px`, width: '48px', height: '48px', borderRadius: '50%' };
+        return { left: `${fabPos.x}px`, top: isUp ? `${fabPos.y - 224}px` : `${fabPos.y + 280}px`, width: '48px', height: '48px', borderRadius: '50%' };
       case 'levels':
         return { left: '0.75rem', top: '1rem', width: 'calc(100% - 1.5rem)', height: '40%', borderRadius: '0.75rem' };
       case 'round':
@@ -97,7 +96,7 @@ export const TutorialOverlay = ({ step, t, onNext, onPrev, onClose, fabPos, onTo
               <div key={idx} className={`h-2 rounded-full transition-all ${idx === step ? 'w-8 bg-blue-600' : 'w-2 bg-gray-300'}`} />
             ))}
           </div>
-          <div className="text-[10px] text-gray-400 font-mono">v1.0.5</div>
+          <div className="text-[10px] text-gray-400 font-mono">{version}</div>
         </div>
       </div>
     </div>

@@ -52,13 +52,13 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: false,
+        skipWaiting: true,
         navigateFallback: 'index.html',
-        navigateFallbackAllowlist: [/^\/$/],
+        navigateFallbackAllowlist: [/./],
         runtimeCaching: [
           {
             urlPattern: /^\/$/,
-            handler: 'NetworkFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'home-cache',
               expiration: {

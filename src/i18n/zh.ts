@@ -62,6 +62,21 @@ export default {
         tutorialStep4Title: '玩家操作',
         tutorialStep4Desc: '点击任意玩家按钮可修改名字、记录独赢或结对赢分数。',
         tutorialStep5Title: '查看历史',
-        tutorialStep5Desc: '点击中间灰色区域可查看所有得分历史记录。'
+        tutorialStep5Desc: '点击中间灰色区域可查看所有得分历史记录。',
+        localMode: '本地模式',
+        cloudMode: '云端模式',
+        forceRefresh: '强制刷新 (从服务器)',
+        confirmForceRefresh: '确定要强制从服务器重新加载应用吗？这通常用于解决离线缓存滞后问题。',
+        updateAvailableTitle: '发现新版本',
+        updateAvailableMsg: '发现新版本 {version}。立即更新以获得最佳体验？',
+        updateNow: '立即更新',
+        updateLater: '下次提醒',
+        skipUpdate: '跳过此版本',
+        statusOnline: '在线 (最新)',
+        statusOffline: '离线模式',
+        statusUpdateAvailable: '有新版本可用',
+        statusCheckFailed: '版本检测失败',
+        tutorialStatusTitle: '应用状态与更新',
+        tutorialStatusDesc: '点击此按钮可强制从服务器刷新。右上角的点显示状态：🟢 有更新，⚪ 检测失败，⚫ 离线。'
     }
 };

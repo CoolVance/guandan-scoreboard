@@ -1,66 +1,83 @@
-# Capability: UI & Visual System
+# 能力：UI 与视觉系统
 
-## Description
-Defines the visual language, design tokens, and animation standards for the Guandan Scoreboard. Ensures consistent aesthetics across all components and platforms (PWA).
+## 描述
+定义掼蛋记分板的视觉语言、设计令牌和动画标准。确保所有组件和平台（PWA）的审美一致性。
 
-## Design Tokens (Tailwind v4 Integration)
+## 设计令牌 (Tailwind v4 集成)
 
-### Colors
-- `team-red`: Primary color for the North/South team (`#ef4444`).
-- `team-blue`: Primary color for the West/East team (`#3b82f6`).
-- `accent-gold`: Used for round indicators and highlights (`#facc15`).
-- `surface-modal`: Light gray background for modal headers and sub-surfaces (`#f9fafb`).
+### 颜色
+- `team-red`: 北/南阵营的主色调 (`#ef4444`)。
+- `team-blue`: 西/东阵营的主色调 (`#3b82f6`)。
+- `accent-gold`: 用于局数指示和高亮 (`#facc15`)。
+- `surface-modal`: 模态框标题和子表面的浅灰色背景 (`#f9fafb`)。
 
-### Shape & Elevation
-- `main` Radius: `1.5rem` (Used for Modals and large containers).
-  - Class: `rounded-main`
-- `button` Radius: `1.0rem` (Used for Player buttons and Swipe controls).
-  - Class: `rounded-button`
-- `elevated` Shadow: Deep shadow for modals and floating elements.
-  - Class: `shadow-elevated`
+### 形状与阴影
+- `main` 圆角: `1.5rem` (用于模态框和大型容器)。
+  - 类名: `rounded-main`
+- `button` 圆角: `1.0rem` (用于玩家按钮和滑动控件)。
+  - 类名: `rounded-button`
+- `elevated` 阴影: 用于模态框和悬浮元素的深阴影。
+  - 类名: `shadow-elevated`
 
-## Animation & Motion
+## 动画与动效
 
-### Standard Pop
-- **Easing**: `cubic-bezier(0.34, 1.56, 0.64, 1)` (Bounce effect).
-- **Duration**: `200ms`.
-- **Class**: `animate-pop`.
-- **Usage**: Applied to all score triggers and swipe interactions.
+### 标准弹出 (Standard Pop)
+- **缓动**: `cubic-bezier(0.34, 1.56, 0.64, 1)` (回弹效果)。
+- **持续时间**: `200ms`。
+- **类名**: `animate-pop`。
+- **用法**: 应用于所有分数触发和滑动交互。
 
-### RGB Border
-- A multi-color pulsing shadow used exclusively for the **Locked** state of the control FAB.
+### RGB 边框
+- 专用于控制 FAB 锁定状态的多色脉冲阴影。
 
-## Component Standards
+## 组件标准
 
-### Modals
-- Must use `rounded-main` and `shadow-elevated`.
-- Background must have `backdrop-blur-sm`.
+### 模态框 (Modals)
+- 必须使用 `rounded-main` 和 `shadow-elevated`。
+- 背景必须具有 `backdrop-blur-sm`。
 
-### Interaction Feedback
-- Physical buttons should have `active:scale-95 transition-transform`.
-- Swipe areas should use `active:brightness-90 transition-all`.
+### 交互反馈
+- 物理按钮应具有 `active:scale-95 transition-transform`。
+- 滑动区域应使用 `active:brightness-90 transition-all`。
 
-### Draggable Drawer Control FAB Layout
-The Draggable Drawer's main Control FAB (Floating Action Button) group SHALL maintain a fixed vertical order for its primary buttons to ensure ergonomic consistency.
+### 吸边栏控制按钮布局
+吸边栏的主控制按钮组 (FAB) SHALL 保持固定的垂直顺序，以确保人机工程学的一致性。
 
-#### Scenario: Fixed button order regardless of vertical position
-- **WHEN** the Draggable Drawer is located in the upper half of the screen
-- **THEN** the "Lock" button SHALL be positioned vertically above the "Menu" button
-- **WHEN** the Draggable Drawer is moved to the lower half of the screen
-- **THEN** the "Lock" button SHALL remain positioned vertically above the "Menu" button
+#### 场景：无论垂直位置如何，按钮顺序固定
+- **当** 吸边栏位于屏幕上半部分时
+- **那么** “锁定”按钮 SHALL 位于“菜单”按钮的上方
+- **当** 吸边栏移动到屏幕下半部分时
+- **那么** “锁定”按钮 SHALL 依然保持在“菜单”按钮的上方
 
-### Human-Friendly Documentation Tone
-The project's primary documentation (READMEs) SHALL prioritize accessibility and "plain language" over technical jargon to ensure non-technical users can understand the project's value and deployment options.
+### 人性化文档语气
+项目的核心文档 (README) SHALL 优先考虑易读性和“通俗易懂”，而非技术术语，以确保非技术用户也能理解项目的价值和部署选项。
 
-#### Scenario: User reads README to understand the project
-- **WHEN** a user opens the `README.md`
-- **THEN** the primary introduction and features SHALL focus on user benefits (e.g., "easy scoring", "offline use") rather than technical implementation details (e.g., "React 18", "Service Worker").
+#### 场景：用户通过阅读 README 了解项目
+- **当** 用户打开 `README.md` 时
+- **那么** 主要介绍和功能点 SHALL 侧重于用户收益（如“轻松计分”、“离线使用”），而非技术实现细节（如“React 18”、“Service Worker”）。
 
-### Centralized Deployment Links
-All project documentation SHALL feature the Cloudflare deployment link as the recommended access point to ensure a consistent user experience.
+### 集中化部署链接
+所有项目文档 SHALL 将 Cloudflare 部署链接作为推荐的访问入口，以确保一致的用户体验。
 
-#### Scenario: User looks for a demo link
-- **WHEN** a user checks the "Demo" or "Live" section of any README
-- **THEN** the link `https://guandan-scoreboard.inin.workers.dev/` SHALL be listed prominently as a primary option.
+#### 场景：用户寻找演示链接
+- **当** 用户查看任何 README 的“演示”或“立即使用”章节时
+- **那么** `https://guandan-scoreboard.inin.workers.dev/` 链接 SHALL 被显著列为首选。
 
+### 侧边栏访问模式按钮
+侧边栏 SHALL 包含一个按钮，用于显示当前连接/版本状态并触发刷新。
+
+#### 场景：按钮状态指示灯
+- **当** `version-management` 检测到更新时，显示**闪烁的绿色点**。
+- **当** 应用为最新版时，显示**实心绿色点**。
+- **当** 检测版本失败时，显示**灰色点**。
+- **当** 网络离线时，显示**黑色点**。
+
+### 教程系统标准
+教程遮罩层 SHALL 确保与应用状态同步。
+
+#### 场景：动态版本显示
+- **当** `TutorialOverlay` 可见时，它 SHALL 动态显示应用定义的当前版本号。
+
+#### 场景：教程引导包含状态灯说明
+- **当** 教程高亮显示刷新按钮时，描述文本 SHALL 包含对不同颜色状态点（绿、灰、黑）含义的说明。
 
