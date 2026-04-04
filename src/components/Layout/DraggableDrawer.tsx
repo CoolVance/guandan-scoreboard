@@ -147,7 +147,7 @@ export const DraggableDrawer = ({
         onTouchEnd={handleEnd}
         onMouseDown={handleMouseDown}
       >
-        <div className={`relative flex ${pos.y > window.innerHeight / 2 ? 'flex-col-reverse' : 'flex-col'} gap-2`}>
+        <div className="relative flex flex-col gap-2">
           <button
             className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white transition-all relative border-2 border-white ${isLocked ? (unlockProgress > 0 ? 'bg-red-600 scale-110' : 'bg-team-red animate-[pulse_2s_infinite] ring-4 ring-transparent') : 'bg-gray-400'}`}
             style={{
