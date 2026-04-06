@@ -26,7 +26,7 @@ export const DraggableDrawer = ({
   security, setConfirmModal, updateStatus = 'latest',
   isTutorialActive = false
 }: DraggableDrawerProps) => {
-  const { isOnline } = useNetwork();
+  const { isOnline, isOfflineReady } = useNetwork();
   const { t } = useI18n();
   const { isLocked, setIsLocked, lockProgress, unlockProgress, startUnlocking, stopUnlocking } = security;
   const [pos, setPos] = useState(initialPos);
@@ -38,15 +38,38 @@ export const DraggableDrawer = ({
   }, []);
 
   const handleModeClick = () => {
+    // Show detailed status toast-like information
+    const statusMsg = !isOnline ? t('statusOffline') : 
+                     (updateStatus === 'available' ? t('statusUpdateAvailable') : 
+                     (updateStatus === 'failed' ? t('statusCheckFailed') : t('statusOnline')));
+    
+    const offlineMsg = isOfflineReady ? t('offlineReady') : t('offlinePreparing');
+    const fullMsg = `${statusMsg}\n${offlineMsg}\n\n${t('confirmForceRefresh')}`;
+
     if (setConfirmModal) {
       setConfirmModal({
         isOpen: true,
-        message: t('confirmForceRefresh'),
+        message: (
+          <div className="text-left space-y-2">
+            <div className="flex items-center gap-2 font-bold text-gray-900">
+              <div className={`w-3 h-3 rounded-full ${!isOnline ? 'bg-black' : (updateStatus === 'available' ? 'bg-green-500 animate-pulse' : (updateStatus === 'failed' ? 'bg-gray-400' : 'bg-green-500'))}`}></div>
+              {statusMsg}
+            </div>
+            <div className="text-sm text-gray-600 flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${isOfflineReady ? 'bg-green-500' : 'bg-yellow-400 animate-pulse'}`}></div>
+              {offlineMsg}
+            </div>
+            {isOfflineReady && <div className="text-xs text-green-600 font-medium">{t('offlineReadyMsg')}</div>}
+            <div className="pt-4 border-t border-gray-100 mt-2 text-gray-500 text-sm">
+              {t('confirmForceRefresh')}
+            </div>
+          </div>
+        ),
         onConfirm: () => {
           window.location.reload();
         }
       });
-    } else if (window.confirm(t('confirmForceRefresh'))) {
+    } else if (window.confirm(fullMsg)) {
       window.location.reload();
     }
   };
@@ -240,7 +263,7 @@ export const DraggableDrawer = ({
                   updateStatus === 'available' ? 'bg-green-500' : 
                   updateStatus === 'failed' ? 'bg-gray-400' : 
                   updateStatus === 'offline' ? 'bg-black' :
-                  'bg-green-500' // latest 状态显示实心绿点
+                  (isOfflineReady ? 'bg-green-500' : 'bg-yellow-400 animate-pulse')
                 }`}></span>
               </span>
             </button>

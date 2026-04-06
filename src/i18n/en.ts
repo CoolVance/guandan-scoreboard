@@ -76,6 +76,10 @@ export default {
         statusOffline: 'Offline Mode',
         statusUpdateAvailable: 'Update Available',
         statusCheckFailed: 'Check Failed',
+        offlineReady: 'Offline Ready',
+        offlinePreparing: 'Preparing for offline...',
+        offlineReadyMsg: 'App is fully cached and will open instantly even without server.',
+        offlineStatus: 'Offline Readiness',
         tutorialStatusTitle: 'App Status & Updates',
         tutorialStatusDesc: 'Click this button to force a server refresh. The dot on the top right shows status: 🟢 Update Available, ⚪ Check Failed, ⚫ Offline.'
     }

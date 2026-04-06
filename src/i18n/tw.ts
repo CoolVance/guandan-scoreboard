@@ -75,7 +75,11 @@ export default {
         statusOnline: '在線 (最新)',
         statusOffline: '離線模式',
         statusUpdateAvailable: '有新版本可用',
-        statusCheckFailed: '版本檢测失敗',
+        statusCheckFailed: '版本檢測失敗',
+        offlineReady: '離線就緒',
+        offlinePreparing: '正在準備離線資源...',
+        offlineReadyMsg: '應用已完整緩存，即使服務器宕机也能秒開。',
+        offlineStatus: '離線就緒狀態',
         tutorialStatusTitle: '應用狀態與更新',
         tutorialStatusDesc: '點擊此按鈕可強制從服務器刷新。右上角的點顯示狀態：🟢 有更新，⚪ 檢测失敗，⚫ 離線。'
     }

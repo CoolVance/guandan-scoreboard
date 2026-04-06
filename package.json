@@ -1,7 +1,7 @@
 {
   "name": "guandan-scoreboard",
   "private": true,
-  "version": "1.0.5",
+  "version": "2.1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CoolVance/guandan-scoreboard.git"

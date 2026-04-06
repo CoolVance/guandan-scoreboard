@@ -76,6 +76,10 @@ export default {
         statusOffline: '离线模式',
         statusUpdateAvailable: '有新版本可用',
         statusCheckFailed: '版本检测失败',
+        offlineReady: '离线就绪',
+        offlinePreparing: '正在准备离线资源...',
+        offlineReadyMsg: '应用已完整缓存，即使服务器宕机也能秒开。',
+        offlineStatus: '离线就绪状态',
         tutorialStatusTitle: '应用状态与更新',
         tutorialStatusDesc: '点击此按钮可强制从服务器刷新。右上角的点显示状态：🟢 有更新，⚪ 检测失败，⚫ 离线。'
     }

@@ -114,30 +114,14 @@ export default function App() {
 
   const handleUpdateNow = async () => {
     if (remoteVersion) {
-      // 记录尝试更新的版本，防止刷新后立即再次弹窗
       sessionStorage.setItem('last_attempted_version', remoteVersion);
     }
     
     setShowUpdateModal(false);
     
-    // 强制清理所有能删的缓存
-    try {
-      if ('caches' in window) {
-        const names = await caches.keys();
-        await Promise.all(names.map(name => caches.delete(name)));
-      }
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(r => r.unregister()));
-      }
-    } catch (e) {
-      console.error('Cleanup failed:', e);
-    }
-
-    // 强制带随机参数刷新，确保穿透浏览器磁盘缓存
-    const url = new URL(window.location.href);
-    url.searchParams.set('reload_t', Date.now().toString());
-    window.location.replace(url.toString());
+    // 不再手动注销 SW 和清空缓存，这会导致离线功能失效。
+    // 直接刷新页面，Service Worker 会处理新旧版本的更替。
+    window.location.reload();
   };
 
   const handleSkipVersion = () => {
