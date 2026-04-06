@@ -185,3 +185,9 @@ dist-ssr
 *.sln
 *.sw?
 *.tar
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
