@@ -11,7 +11,7 @@ interface TutorialOverlayProps {
   version?: string;
 }
 
-export const TutorialOverlay = ({ step, t, onNext, onPrev, onClose, fabPos, onToggleLang, version = 'v2.1.0' }: TutorialOverlayProps) => {
+export const TutorialOverlay = ({ step, t, onNext, onPrev, onClose, fabPos, onToggleLang, version = 'v2.1.1' }: TutorialOverlayProps) => {
   // 定义每一步的目标区域和说明
   const tutorialSteps = [
     { target: 'fab', title: t('tutorialStep1Title'), desc: t('tutorialStep1Desc'), cardPosition: 'bottom' },

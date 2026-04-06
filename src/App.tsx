@@ -35,7 +35,7 @@ interface InternalPlayerConfig extends PlayerConfig {
 }
 
 // --- 常量 ---
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.1.1';
 
 const INITIAL_PLAYERS: Record<PlayerId, InternalPlayerConfig> = {
   N: { id: 'N', defaultName: 'north', color: 'red', position: 'top' },
