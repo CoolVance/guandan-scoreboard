@@ -5,13 +5,44 @@ const AUTO_LOCK_TIME = 10000; // 10 seconds
 const UNLOCK_DURATION = 800;  // 800ms
 
 export function useSecurity(onAutoLock?: () => void) {
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLockedState] = useState(false);
   const [lockProgress, setLockProgress] = useState(0);
   const [unlockProgress, setUnlockProgress] = useState(0);
 
   const lastActivity = useRef(Date.now());
   const unlockTimer = useRef<any>(null);
   const lockPressActive = useRef(false);
+  const lastToggleTime = useRef(0);
+  const isFirstMount = useRef(true);
+
+  // Protected setter to prevent rapid state flipping
+  const setIsLocked = useCallback((locked: boolean | ((prev: boolean) => boolean)) => {
+    const now = Date.now();
+    if (now - lastToggleTime.current < 500) {
+      return;
+    }
+
+    setIsLockedState(prev => {
+      const next = typeof locked === 'function' ? locked(prev) : locked;
+      if (next !== prev) {
+        lastToggleTime.current = now;
+      }
+      return next;
+    });
+  }, []);
+
+  // Haptic feedback on state change
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    if (isLocked) {
+      vibrateLock();
+    } else {
+      vibrateUnlock();
+    }
+  }, [isLocked]);
 
   const recordActivity = useCallback(() => {
     lastActivity.current = Date.now();
@@ -21,16 +52,14 @@ export function useSecurity(onAutoLock?: () => void) {
   const lock = useCallback(() => {
     setIsLocked(true);
     setLockProgress(0);
-    vibrateLock();
     if (onAutoLock) onAutoLock();
-  }, [onAutoLock]);
+  }, [setIsLocked, onAutoLock]);
 
   const unlock = useCallback(() => {
     setIsLocked(false);
     setUnlockProgress(0);
-    vibrateUnlock();
     recordActivity();
-  }, [recordActivity]);
+  }, [setIsLocked, recordActivity]);
 
   // --- Auto-lock Timer ---
   useEffect(() => {

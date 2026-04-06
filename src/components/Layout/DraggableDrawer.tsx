@@ -155,7 +155,13 @@ export const DraggableDrawer = ({
   };
 
   const handleLockPressStart = (e?: React.MouseEvent | React.TouchEvent) => {
-    if (e && 'touches' in e) e.stopPropagation();
+    if (e) {
+      if ('touches' in e) {
+        e.stopPropagation();
+      } else {
+        // Mouse event - prevent focus/scrolling
+      }
+    }
     
     if (!isLocked) {
       setIsLocked(true);
@@ -167,7 +173,14 @@ export const DraggableDrawer = ({
   };
 
   const handleLockPressEnd = (e?: React.MouseEvent | React.TouchEvent) => {
-    if (e && 'touches' in e) e.stopPropagation();
+    if (e) {
+      if ('touches' in e) {
+        e.stopPropagation();
+        // Prevent synthetic click that might trigger accidental re-locking 
+        // if the state changed during the press
+        if (e.cancelable) e.preventDefault();
+      }
+    }
     stopUnlocking();
   };
 
